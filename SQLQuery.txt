@@ -1,0 +1,22 @@
+c2
+Select * from chi_tiet_su_dung_dv where SoLuong>3 And SoLuong<10 
+
+c3
+update phong set GiaPhong = phong.GiaPhong+10000 where SoKhachToiDa >10
+
+c4
+delete from chi_tiet_su_dung_dv where MaDatPhong In (select MaDatPhong from dat_phong where TrangThaiDat = 'Da huy');
+delete from dat_phong where TrangThaiDat = 'Da huy'
+
+c5
+select TenKH from khach_hang where (TenKH Like 'H%' Or TenKH Like  'M%' or TenKH Like 'N%') and char_length(TenKH) < 20
+
+c7
+select * from dich_vu_di_kem where (DonViTinh = 'lon' and DonGia > 10000) or (DonViTinh = 'cai' and DonGia < 5000)
+
+c10
+select * from khach_hang where MaKH in (select MaKH from dat_phong where MaKH in (select MaKH from khach_hang where DiaChi = 'Hoa xuan'))
+
+c6
+select distinct TenKH from khach_hang;
+select TenKH from khach_hang group by TenKH
