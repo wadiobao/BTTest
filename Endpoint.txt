@@ -1,0 +1,6 @@
+Thêm POST http://localhost:8080/sinhvien/themsinhvien
+Sửa PUT http://localhost:8080/sinhvien/suathongtin/5569ca5e-60ff-491b-b4b2-3ae7d5afd1db
+Xóa DELETE http://localhost:8080/sinhvien/xoasinhvien/d884fd97-8fd5-422c-88a4-2fb564642d66
+Đọc GET http://localhost:8080/sinhvien/tatcasinhvien
+Tìm theo id POST http://localhost:8080/sinhvien/thongtin/5f8e36f4-e76e-4ca5-8c49-2971823ada1d
+Tìm theo tên POST http://localhost:8080/sinhvien/thongtin/hoten?hoTen=Quang Bao123
