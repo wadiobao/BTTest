@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.baitap.quanlisinhvien.model.CustomResponse;
-import com.baitap.quanlisinhvien.model.SinhVienRequest;
+import com.baitap.quanlisinhvien.model.sinhvien.SinhVienRequest;
 import com.baitap.quanlisinhvien.service.SinhVienService;
 
 import lombok.AccessLevel;
@@ -33,12 +33,12 @@ public class SinhVienController {
 	}
 	
 	@PutMapping("/suathongtin/{id}")
-	public CustomResponse<Object> suaThongTinSinhVien(@PathVariable("id") String id, @RequestBody SinhVienRequest sinhVienRequest){
+	public CustomResponse<Object> suaThongTinSinhVien(@PathVariable("id") Long id, @RequestBody SinhVienRequest sinhVienRequest){
 		return sinhVienService.suaThongTinSinhVien(id,sinhVienRequest);
 	}
 	
 	@DeleteMapping("/xoasinhvien/{id}")
-	public CustomResponse<Object> xoaSinhVien(@PathVariable("id") String id){
+	public CustomResponse<Object> xoaSinhVien(@PathVariable("id") Long id){
 		return sinhVienService.xoaSinhVien(id);
 	}
 	
@@ -48,12 +48,23 @@ public class SinhVienController {
 	}
 	
 	@PostMapping("/thongtin/{id}")
-	public CustomResponse<Object> hienThiThongTinSinhVienTheoId(@PathVariable("id") String id){
+	public CustomResponse<Object> hienThiThongTinSinhVienTheoId(@PathVariable("id") Long id){
 		return sinhVienService.hienThiThongTinSinhVienTheoId(id);
 	}
 	
 	@PostMapping("/thongtin/hoten")
 	public CustomResponse<Object> hienThiThongTinCacSinhVienTheoTen(@RequestParam String hoTen){
 		return sinhVienService.hienThiThongTinCacSinhVienTheoTen(hoTen);
+	}
+	
+	@GetMapping("/thongtin/hoten/phantrang")
+	public CustomResponse<Object> hienThiThongTinCacSinhVienTheoTenPhanTrang(
+	    @RequestParam String hoTen,
+	    @RequestParam(defaultValue = "0") int page,
+	    @RequestParam(defaultValue = "10") int size,
+	    @RequestParam(defaultValue = "hoTen") String sortBy,
+	    @RequestParam(defaultValue = "asc") String direction
+	) {
+	    return sinhVienService.hienThiThongTinCacSinhVienTheoTenPhanTrang(hoTen, page, size, sortBy, direction);
 	}
 }

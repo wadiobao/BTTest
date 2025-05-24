@@ -2,6 +2,7 @@ package com.baitap.quanlisinhvien.exception;
 
 import com.baitap.quanlisinhvien.enums.ErrorCode;
 
+@SuppressWarnings("serial")
 public class ExceptionHandle extends RuntimeException {
 	private ErrorCode errorCode;
 
