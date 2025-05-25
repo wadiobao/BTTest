@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.hibernate.Hibernate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -13,6 +14,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import com.baitap.quanlisinhvien.entity.Khoa;
+import com.baitap.quanlisinhvien.entity.LopHoc;
 import com.baitap.quanlisinhvien.entity.MonHoc;
 import com.baitap.quanlisinhvien.entity.SinhVien;
 import com.baitap.quanlisinhvien.enums.ErrorCode;
@@ -43,8 +45,13 @@ public class SinhVienService {
 	public CustomResponse<Object> hienThiTatCaSinhVien() {
 		List<SinhVien> danhSanhSinhVien = sinhVienRepository.findAll();
 		List<SinhVienResponse> danhSanhSinhVienResponses = new ArrayList<SinhVienResponse>();
-
+		Map<String,String> tenLopDangHoc = new HashMap<String, String>();
+		
 		for (SinhVien sinhVien : danhSanhSinhVien) {
+			
+			for (LopHoc lopHoc: sinhVien.getDsLopHoc()) {
+				tenLopDangHoc.put(lopHoc.getMaLop(), lopHoc.getTenLop());
+			}
 	
 			SinhVienResponse sinhVienResponse = SinhVienResponse.builder()
 					.hoTen(sinhVien.getHoTen())
@@ -55,6 +62,7 @@ public class SinhVienService {
 					.sdt(sinhVien.getSdt())
 					.tenKhoa(sinhVien.getKhoa().getTenKhoa())
 					.diem(sinhVien.getDiemMonHoc())
+					.tenLopDangHoc(tenLopDangHoc)
 					.build();
 
 			danhSanhSinhVienResponses.add(sinhVienResponse);
@@ -199,6 +207,7 @@ public CustomResponse<Object> hienThiThongTinCacSinhVienTheoTenPhanTrang(String 
 		}
 		
 		sinhVien.setHoTen(sinhVienRequest.getHoTen());
+		sinhVien.setGioiTinh(sinhVienRequest.getGioiTinh());
 		sinhVien.setDiaChi(sinhVienRequest.getDiaChi());
 		sinhVien.setEmail(sinhVienRequest.getEmail());
 		sinhVien.setNgaySinh(sinhVienRequest.getNgaySinh());
@@ -227,11 +236,23 @@ public CustomResponse<Object> hienThiThongTinCacSinhVienTheoTenPhanTrang(String 
 		if (!sinhVienRepository.existsById(id))
 			return CustomResponse.builder().loiNhan("Khong tim thay sinh vien").build();
 		sinhVien = sinhVienRepository.findById(id).orElseThrow();
+		
+		Hibernate.initialize(sinhVien.getDiemMonHoc());
+		
+		SinhVienResponse sinhVienResponse = SinhVienResponse.builder()
+				.hoTen(sinhVien.getHoTen())
+				.gioiTinh(sinhVien.getGioiTinh())
+				.ngaySinh(sinhVien.getNgaySinh())
+				.email(sinhVien.getEmail())
+				.diaChi(sinhVien.getDiaChi())
+				.sdt(sinhVien.getSdt())
+				.tenKhoa(sinhVien.getKhoa().getTenKhoa())
+				.diem(sinhVien.getDiemMonHoc())
+				.build();
 		sinhVienRepository.delete(sinhVien);
 
 		return CustomResponse.builder()
-				.ketQua(SinhVienResponse.builder().hoTen(sinhVien.getHoTen()).ngaySinh(sinhVien.getNgaySinh())
-						.email(sinhVien.getEmail()).diaChi(sinhVien.getDiaChi()).sdt(sinhVien.getSdt()).build())
+				.ketQua(sinhVienResponse)
 				.loiNhan("Xoa sinh vien thanh cong").build();
 	}
 

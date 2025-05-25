@@ -53,8 +53,7 @@ public class SinhVien {
 
 	String sdt;
 
-	@ManyToMany
-	@JoinTable(name = "sinhvien_lophoc", joinColumns = @JoinColumn(name = "ma_lop"), inverseJoinColumns = @JoinColumn(name = "ma_sinh_vien"))
+	@ManyToMany(mappedBy = "dsSinhVien")	
 	List<LopHoc> dsLopHoc;
 	
 	

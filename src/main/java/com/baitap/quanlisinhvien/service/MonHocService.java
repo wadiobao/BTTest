@@ -65,4 +65,39 @@ public class MonHocService {
 
 		return CustomResponse.builder().ketQua(monHocResponse).loiNhan("Them mon hoc moi thanh cong").build();
 	}
+	
+	public CustomResponse<Object> xoaMonHoc(String id){
+		MonHoc monHoc = monHocRepository.findById(id).orElseThrow(() -> new RuntimeException("Khong tim thay mon hoc"));
+		
+		monHocRepository.delete(monHoc);
+		
+		MonHocResponse monHocResponse = MonHocResponse.builder()
+				.maMonHoc(monHoc.getMaMonHoc())
+				.tenMonHoc(monHoc.getTenMonHoc())
+				.tenKhoa(monHoc.getKhoa().getTenKhoa())
+				.build();
+		
+		return CustomResponse.builder().ketQua(monHocResponse).loiNhan("Xoa mon hoc moi thanh cong").build();
+	}
+	
+	public CustomResponse<Object> suaMonHoc(String id,MonHocRequest monHocRequest){
+		MonHoc monHoc = monHocRepository.findById(id).orElseThrow(() -> new RuntimeException("Khong tim thay mon hoc"));
+		
+		Khoa khoa = khoaRepository.findByTenKhoa(monHocRequest.getTenKhoa()).orElseThrow(() -> new ExceptionHandle(ErrorCode.KHOA_KHONG_TON_TAI));
+		
+		monHoc.setTenMonHoc(monHocRequest.getTenMonHoc());
+		monHoc.setKhoa(khoa);
+		
+		monHocRepository.save(monHoc);
+		
+		MonHocResponse monHocResponse = MonHocResponse.builder()
+				.maMonHoc(monHoc.getMaMonHoc())
+				.tenMonHoc(monHoc.getTenMonHoc())
+				.tenKhoa(monHoc.getKhoa().getTenKhoa())
+				.build();
+		
+		return CustomResponse.builder().ketQua(monHocResponse).loiNhan("Sua mon hoc moi thanh cong").build();
+	}
+	
+	
 }

@@ -26,12 +26,12 @@ public class Khoa {
 	String maKhoa;
 	String tenKhoa;
 	
-	@OneToMany(mappedBy = "khoa",cascade = CascadeType.ALL,orphanRemoval = true )
+	@OneToMany(mappedBy = "khoa",cascade = CascadeType.ALL)
 	List<MonHoc> dsMonHoc;
 	
-	@OneToMany(mappedBy = "khoa",cascade = CascadeType.ALL,orphanRemoval = true )
+	@OneToMany(mappedBy = "khoa",cascade = CascadeType.ALL)
 	List<GiangVien> dsGiangVien;
 	
-	@OneToMany(mappedBy = "khoa",cascade = CascadeType.ALL,orphanRemoval = true )
+	@OneToMany(mappedBy = "khoa",cascade = CascadeType.ALL )
 	List<SinhVien> dsSinhVien;
 }

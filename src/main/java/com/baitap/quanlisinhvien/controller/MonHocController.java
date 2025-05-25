@@ -1,7 +1,10 @@
 package com.baitap.quanlisinhvien.controller;
 
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -29,7 +32,17 @@ public class MonHocController {
 	}
 	
 	@PostMapping("/themmonhoc")
-	public CustomResponse<Object> themKhoa(@RequestBody MonHocRequest monHocRequest){
+	public CustomResponse<Object> themMonHoc(@RequestBody MonHocRequest monHocRequest){
 		return monHocService.themMonHoc(monHocRequest);
 	}
+	
+	@DeleteMapping("xoa/{id}")
+	public CustomResponse<Object> xoaMonHoc(@PathVariable("id") String id){
+		return monHocService.xoaMonHoc(id);
+	} 
+	
+	@PutMapping("/sua/{id}")
+	public CustomResponse<Object> xoaMonHoc(@PathVariable("id") String id,@RequestBody MonHocRequest monHocRequest){
+		return monHocService.suaMonHoc(id, monHocRequest);
+	} 
 }
