@@ -45,9 +45,10 @@ public class SinhVienService {
 	public CustomResponse<Object> hienThiTatCaSinhVien() {
 		List<SinhVien> danhSanhSinhVien = sinhVienRepository.findAll();
 		List<SinhVienResponse> danhSanhSinhVienResponses = new ArrayList<SinhVienResponse>();
-		Map<String,String> tenLopDangHoc = new HashMap<String, String>();
+		
 		
 		for (SinhVien sinhVien : danhSanhSinhVien) {
+			Map<String,String> tenLopDangHoc = new HashMap<String, String>();
 			
 			for (LopHoc lopHoc: sinhVien.getDsLopHoc()) {
 				tenLopDangHoc.put(lopHoc.getMaLop(), lopHoc.getTenLop());
@@ -152,6 +153,8 @@ public CustomResponse<Object> hienThiThongTinCacSinhVienTheoTenPhanTrang(String 
 
 	public CustomResponse<Object> themSinhVien(SinhVienRequest sinhVienRequest) {
 		
+		
+		
 		Khoa khoa = khoaRepository.findByTenKhoa(sinhVienRequest.getTenKhoa())
 				.orElseThrow(() -> new ExceptionHandle(ErrorCode.KHOA_KHONG_TON_TAI));
 		
@@ -164,6 +167,7 @@ public CustomResponse<Object> hienThiThongTinCacSinhVienTheoTenPhanTrang(String 
 				.diaChi(sinhVienRequest.getDiaChi())
 				.sdt(sinhVienRequest.getSdt())
 				.khoa(khoa)
+				.dsLopHoc(new ArrayList<LopHoc>())
 				.build();
 
 		sinhVienRepository.save(sinhVien);
@@ -177,6 +181,7 @@ public CustomResponse<Object> hienThiThongTinCacSinhVienTheoTenPhanTrang(String 
 						.diaChi(sinhVienRequest.getDiaChi())
 						.sdt(sinhVienRequest.getSdt())
 						.tenKhoa(khoa.getTenKhoa())
+						.tenLopDangHoc(new HashMap<String, String>())
 						.build())
 				.loiNhan("Them sinh vien thanh cong").build();
 	}
