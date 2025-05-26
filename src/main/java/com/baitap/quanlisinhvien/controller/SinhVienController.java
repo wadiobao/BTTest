@@ -60,11 +60,10 @@ public class SinhVienController {
 	@GetMapping("/thongtin/hoten/phantrang")
 	public CustomResponse<Object> hienThiThongTinCacSinhVienTheoTenPhanTrang(
 	    @RequestParam String hoTen,
-	    @RequestParam(defaultValue = "0") int page,
-	    @RequestParam(defaultValue = "10") int size,
-	    @RequestParam(defaultValue = "hoTen") String sortBy,
-	    @RequestParam(defaultValue = "asc") String direction
-	) {
-	    return sinhVienService.hienThiThongTinCacSinhVienTheoTenPhanTrang(hoTen, page, size, sortBy, direction);
+	    @RequestParam(defaultValue = "0") int soTrang,
+	    @RequestParam(defaultValue = "10") int kichCo,
+	    @RequestParam(defaultValue = "hoTen") String sapXepTheo,
+	    @RequestParam(defaultValue = "tang") String huongSapXep) {
+	    return sinhVienService.hienThiThongTinCacSinhVienTheoTenPhanTrang(hoTen, soTrang, kichCo, sapXepTheo, huongSapXep);
 	}
 }

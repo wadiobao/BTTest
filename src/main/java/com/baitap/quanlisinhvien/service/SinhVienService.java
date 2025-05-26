@@ -117,16 +117,16 @@ public class SinhVienService {
 				.loiNhan("Hien thi thong tin sinh vien theo ten can tim").build();
 	}
 	
-public CustomResponse<Object> hienThiThongTinCacSinhVienTheoTenPhanTrang(String hoTen, int page, int size, String sortBy, String direction) {
+public CustomResponse<Object> hienThiThongTinCacSinhVienTheoTenPhanTrang(String hoTen, int soTrang, int kichCo, String sapXepTheo, String huongSapXep) {
 	
 		Sort sort;
-		if(direction.equalsIgnoreCase("desc")) {
-			sort = Sort.by(sortBy).descending();
+		if(huongSapXep.equalsIgnoreCase("giam")) {
+			sort = Sort.by(sapXepTheo).descending();
 		}else {
-			sort = Sort.by(sortBy).ascending();
+			sort = Sort.by(sapXepTheo).ascending();
 		}
 		
-		Pageable pageable = PageRequest.of(page, size, sort);
+		Pageable pageable = PageRequest.of(soTrang, kichCo, sort);
 		
 		Page<SinhVien> pageSinhVien = sinhVienRepository.findAllByHoTenContainingIgnoreCase(hoTen, pageable);
 
