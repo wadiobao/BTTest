@@ -1,7 +1,8 @@
+import re
 from typing import List, Optional, Set
 from fastapi import Body, Depends, FastAPI, HTTPException, Header, Path, status, Query #import class FastAPI() từ thư viện fastapi, 
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import BaseModel, EmailStr, Field, HttpUrl, field_validator, validator
 from sqlalchemy import URL
 from sqlmodel import Field, Relationship, SQLModel, extract, select 
 from sqlalchemy.ext.asyncio import create_async_engine
@@ -48,11 +49,23 @@ class SinhVienRequest(SQLModel):
     gioi_tinh: Optional[str] = None
     ngay_sinh:  Optional[datetime]
     sdt : Optional[str] = None
-    email: Optional[str] = None
+    email: EmailStr
     que_quan: Optional[str] = None
     khoa_id : Optional[str] = None
     class Config:
         orm_mode: True
+    
+    @field_validator("gioi_tinh")
+    def validate_gioi_tinh(cls,v):
+        if v.lower() not in ("nam", "nữ", "nu"):
+            raise ValueError("Giới tính phải là 'Nam' hoặc 'Nữ'")
+        return v.title()
+    
+    @field_validator("sdt")
+    def validate_sdt(cls,v):
+        if not re.match(r"^(0|\+84)[0-9]{9}$", v):
+            raise ValueError("Số điện thoại không hợp lệ")
+        return v
 
 class SinhVienResponse(SQLModel):
     id: Optional[int] = None
