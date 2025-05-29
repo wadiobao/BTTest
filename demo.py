@@ -121,7 +121,7 @@ def map_lop_to_response(lop: LopHoc) -> LopHocResponse:
 DATABASE_URL_ASYNC = URL.create(
     drivername="mysql+aiomysql",
     username="root",
-    password="hellobao0X@",
+    password="",
     host="localhost",
     port=3306,
     database="quan_li_sinh_vien"
