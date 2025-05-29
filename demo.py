@@ -1,12 +1,14 @@
 import re
-from typing import List, Optional, Set
-from fastapi import Body, Depends, FastAPI, HTTPException, Header, Path, status, Query #import class FastAPI() từ thư viện fastapi, 
+from typing import Any, List, Optional, Set
+from fastapi import Body, Depends, FastAPI, HTTPException, Header, Path, Request, status, Query #import class FastAPI() từ thư viện fastapi, 
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel, EmailStr, Field, HttpUrl, field_validator, validator
 from sqlalchemy import URL
 from sqlmodel import Field, Relationship, SQLModel, extract, select 
 from sqlalchemy.ext.asyncio import create_async_engine
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
@@ -36,7 +38,7 @@ class SinhVien(SQLModel, table = True):
     id: Optional[int] = Field(default=None,primary_key=True)
     ten_sinh_vien: str = Field(index=True)
     gioi_tinh: str
-    ngay_sinh:  datetime
+    ngay_sinh:  date
     sdt : str
     email: str
     que_quan: str
@@ -47,9 +49,9 @@ class SinhVien(SQLModel, table = True):
 class SinhVienRequest(SQLModel):
     ten_sinh_vien: Optional[str] = None
     gioi_tinh: Optional[str] = None
-    ngay_sinh:  Optional[datetime]
+    ngay_sinh:  Optional[date]
     sdt : Optional[str] = None
-    email: EmailStr
+    email: str
     que_quan: Optional[str] = None
     khoa_id : Optional[str] = None
     class Config:
@@ -58,20 +60,43 @@ class SinhVienRequest(SQLModel):
     @field_validator("gioi_tinh")
     def validate_gioi_tinh(cls,v):
         if v.lower() not in ("nam", "nữ", "nu"):
-            raise ValueError("Giới tính phải là 'Nam' hoặc 'Nữ'")
+            raise CustomResponseException(
+                message="Giới tính phải là 'Nam' hoặc 'Nữ'"
+            )
         return v.title()
     
     @field_validator("sdt")
     def validate_sdt(cls,v):
         if not re.match(r"^(0|\+84)[0-9]{9}$", v):
-            raise ValueError("Số điện thoại không hợp lệ")
+            raise CustomResponseException(
+                message="Số điện thoại không hợp lệ")
+        return v
+    
+    @field_validator("ngay_sinh",mode="after")
+    @classmethod
+    def validate_ngay_sinh(cls,v:Optional[date]):
+        today = date.today()
+        birth_date = v
+        age = today.year - birth_date.year - ((today.month, today.day) < (birth_date.month, birth_date.day))
+        if age <= 18:
+            raise CustomResponseException(
+                message="Sinh viên phải đủ 18 tuổi trở lên.")
+        return v
+    
+    @field_validator('email')
+    @classmethod
+    def validate_email_format(cls, v: str) -> str:
+        email_regex = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+        if not re.fullmatch(email_regex, v):
+            raise CustomResponseException(
+                message="Email không hợp lệ. Vui lòng nhập email đúng định dạng.")
         return v
 
 class SinhVienResponse(SQLModel):
     id: Optional[int] = None
     ten_sinh_vien: str
     gioi_tinh: str
-    ngay_sinh:  datetime
+    ngay_sinh:  date
     sdt : str
     email: str
     que_quan: str
@@ -129,7 +154,18 @@ def map_lop_to_response(lop: LopHoc) -> LopHocResponse:
         si_so=lop.si_so,
         ds_sinh_vien=lop.ds_sinh_vien
     )
-
+    
+class CustomResponse(BaseModel):
+    code: int
+    status: str = Field(default="success")
+    result: Any
+    
+class CustomResponseException(Exception):
+    message:str
+    def __init__(self, message: str):
+        self.message = message
+        super().__init__(self.message)
+    
 
 DATABASE_URL_ASYNC = URL.create(
     drivername="mysql+aiomysql",
@@ -154,7 +190,8 @@ async def them_sinh_vien_db(sinhVienRequest: SinhVienRequest)-> Optional[SinhVie
     async with AsyncSession(async_engine) as session:
         khoa = await session.get(Khoa, sinhVienRequest.khoa_id)
         if not khoa:
-            raise HTTPException(status_code=400, detail="Khoa không tồn tại tồn tại")
+            raise CustomResponseException(
+                message="Khoa không tồn tại")
         sinhVien = SinhVien.from_orm(sinhVienRequest)
         session.add(sinhVien)
         await session.commit()
@@ -166,7 +203,8 @@ async def them_khoa_db(khoaRequest: KhoaRequest)-> Optional[KhoaResponse]:
     async with AsyncSession(async_engine) as session:
         khoa = await session.get(Khoa, khoaRequest.id)
         if khoa:
-            raise HTTPException(status_code=400, detail="Khoa đã tồn tại")
+            raise CustomResponseException(
+                message="Khoa đã tồn tại")
         khoa = Khoa.from_orm(khoaRequest)
         session.add(khoa)
         await session.commit()
@@ -178,7 +216,8 @@ async def them_lop_db(lopHocRequest: LopHocRequest)-> Optional[LopHocResponse]:
     async with AsyncSession(async_engine) as session:
         lopHoc = await session.get(LopHoc, lopHocRequest.id)
         if lopHoc:
-            raise HTTPException(status_code=400, detail="Lớp học đã tồn tại")
+            raise CustomResponseException(
+                message="Lớp học đã tồn tại")
         lopHoc = LopHoc.from_orm(lopHocRequest)
         session.add(lopHoc)
         await session.commit()
@@ -233,7 +272,8 @@ async def hien_sinh_vien_id_db(id: int) -> Optional[SinhVienResponse]:
         result = await session.execute(stmt)
         sinhVien = result.scalar_one_or_none()
         if not sinhVien:
-            raise HTTPException(status_code=400, detail="Sinh viên không  tồn tại")
+            raise CustomResponseException(
+                message="Sinh viên không  tồn tại")
         sinhVienResponse = map_sinhvien_to_response(sinhVien)
         return sinhVienResponse
     
@@ -249,7 +289,8 @@ async def hien_sinh_vien_ten_db(ten: str) -> Optional[List[SinhVienResponse]]:
         result = await session.execute(stmt)    
         sinhVienList = result.scalars().all()
         if not sinhVienList:
-            raise HTTPException(status_code=400, detail="Sinh viên không  tồn tại")
+            raise CustomResponseException(
+                message="Sinh viên không  tồn tại")
         
         sinhVienResponses = [map_sinhvien_to_response(sv) for sv in sinhVienList]
         return sinhVienResponses
@@ -278,7 +319,8 @@ async def hien_khoa_ten_db(ten: str) -> Optional[List[KhoaResponse]]:
 
         khoaList = result.scalars().all()
         if not khoaList:
-            raise HTTPException(status_code=400, detail="Khoa không  tồn tại")
+            raise CustomResponseException(
+                message="Khoa không  tồn tại")
         
         khoaResponses = [map_khoa_to_response(k) for k in khoaList]
         return khoaResponses
@@ -300,10 +342,12 @@ async def sua_sinh_vien_db(id: int,sinhVienRequest: SinhVienRequest) -> Optional
     async with AsyncSession(async_engine) as session:
         khoa = await session.get(Khoa, sinhVienRequest.khoa_id)
         if not khoa:
-            raise HTTPException(status_code=400, detail="Khoa không tồn tại")
+            raise CustomResponseException(
+                message="Khoa không tồn tại")
         sinhVien = await session.get(SinhVien,id)
         if not sinhVien:
-            raise HTTPException(status_code=400, detail="Sinh viên không  tồn tại")
+            raise CustomResponseException(
+                message="Sinh viên không  tồn tại")
         sinhVien_data = sinhVienRequest.model_dump(exclude_unset=True)
         sinhVien.sqlmodel_update(sinhVien_data)
         session.add(sinhVien)
@@ -316,7 +360,8 @@ async def sua_khoa_db(id: str, khoaRequest: KhoaRequest)-> Optional[KhoaResponse
     async with AsyncSession(async_engine) as session:
         khoa = await session.get(Khoa, id)
         if not khoa:
-            raise HTTPException(status_code=400, detail="Khoa không tồn tại")
+            raise CustomResponseException(
+                message="Khoa không tồn tại")
         khoa.ten_khoa = khoaRequest.ten_khoa
         session.add(khoa)
         await session.commit()
@@ -333,13 +378,15 @@ async def sua_lop_db(id: str, lopHocRequest: LopHocRequest)-> Optional[LopHocRes
         )
         lopHoc = result.scalar_one_or_none()
         if not lopHoc:
-            raise HTTPException(status_code=400, detail="Lớp không tồn tại")
+            raise CustomResponseException(
+                message="Lớp không tồn tại")
         lopHoc.ten_lop_hoc = lopHocRequest.ten_lop_hoc
         new_sinh_vien_objects = []
         for svid in lopHocRequest.ds_sinh_vien:
             sinhVien = await session.get(SinhVien,svid)
             if not sinhVien:
-                raise HTTPException(status_code=400, detail="có sinh viên không  tồn tại")
+                raise CustomResponseException(
+                message="có sinh viên không  tồn tại")
             new_sinh_vien_objects.append(sinhVien)
         lopHoc.ds_sinh_vien = new_sinh_vien_objects
         session.add(lopHoc)
@@ -360,7 +407,8 @@ async def xoa_sinh_vien_db(id:int)-> Optional[SinhVienResponse]:
         result = await session.execute(stmt)
         sinhVien = result.scalar_one_or_none()
         if not sinhVien:
-            raise HTTPException(status_code=400, detail="Sinh viên không  tồn tại")
+            raise CustomResponseException(
+                message="Sinh viên không  tồn tại")
         sinhVienResponse = map_sinhvien_to_response(sinhVien)
         sinhVien.ds_lop_hoc = []
         sinhVien.khoa = None
@@ -380,7 +428,8 @@ async def xoa_khoa_db(id:str)-> Optional[KhoaResponse]:
         khoa = result.scalar_one_or_none()
         
         if not khoa:
-            raise HTTPException(status_code=400, detail="Khoa không tồn tại")
+            raise CustomResponseException(
+                message="Khoa không tồn tại")
         
         khoaResponse = map_khoa_to_response(khoa)
         dsSinhVien = [map_sinhvien_to_response(sv) for sv in khoa.ds_sinh_vien]
@@ -407,7 +456,8 @@ async def xoa_lop_db(id:str)-> Optional[LopHocResponse]:
         lopHoc = result.scalar_one_or_none()
         
         if not lopHoc:
-            raise HTTPException(status_code=400, detail="Lớp không tồn tại")
+            raise CustomResponseException(
+                message="Lớp không tồn tại")
         
         lopHocResponse = map_lop_to_response(lopHoc)
         
@@ -425,67 +475,188 @@ app = FastAPI()
 async def start_up():
     await create_db_and_tables()
 
-@app.post("/sinhvien/them/", response_model=SinhVienResponse)
+@app.post("/sinhvien/them/", response_model=CustomResponse)
 async def them_sinh_vien(sinhVienRequest: SinhVienRequest):
-    return await them_sinh_vien_db(sinhVienRequest)
+    data = await them_sinh_vien_db(sinhVienRequest)
+    return CustomResponse(code=status.HTTP_200_OK,result=data)
 
-@app.post("/khoa/them/",response_model=KhoaResponse)
+@app.post("/khoa/them/",response_model=CustomResponse)
 async def them_khoa(khoaRequest: KhoaRequest):
-    return await them_khoa_db(khoaRequest)
+    data = await them_khoa_db(khoaRequest)
+    return CustomResponse(code=status.HTTP_200_OK,result=data)
 
-@app.post("/lop/them/",response_model=LopHocResponse)
+@app.post("/lop/them/",response_model=CustomResponse)
 async def them_lop(lopRequest: LopHocRequest):
-    return await them_lop_db(lopRequest)
+    data=await them_lop_db(lopRequest)
+    return CustomResponse(code=status.HTTP_200_OK,result=data)
 ####################################################################################
-@app.get("/sinhvien/hienthi/tatca", response_model=List[SinhVienResponse])
+@app.get("/sinhvien/hienthi/tatca", response_model=CustomResponse)
 async def hien_ds_sinh_vien():
-    return await hien_ds_sinh_vien_db()
+    data = await hien_ds_sinh_vien_db()
+    return CustomResponse(code=status.HTTP_200_OK,result=data)
 
-@app.get("/sinhvien/hienthi/tuoi", response_model=List[SinhVienResponse])
+@app.get("/sinhvien/hienthi/tuoi", response_model=CustomResponse)
 async def hien_ds_sinh_vien_tuoi_giam_dan(order:Optional[str]="giam"):
-    return await hien_ds_sinh_vien_tuoi_db(order)
+    data= await hien_ds_sinh_vien_tuoi_db(order)
+    return CustomResponse(code=status.HTTP_200_OK,result=data)
 
-@app.get("/sinhvien/hienthi/ten", response_model=List[SinhVienResponse])
+@app.get("/sinhvien/hienthi/ten", response_model=CustomResponse)
 async def hien_sinh_vien_theo_ten(ten:str=Query(...)):
-    return await hien_sinh_vien_ten_db(ten)
+    data= await hien_sinh_vien_ten_db(ten)
+    return CustomResponse(code=status.HTTP_200_OK,result=data)
 
-@app.get("/sinhvien/hienthi/{id}", response_model=SinhVienResponse)
+@app.get("/sinhvien/hienthi/{id}", response_model=CustomResponse)
 async def hien_sinh_vien_theo_id(id: int =Path(...)):
-    return await hien_sinh_vien_id_db(id)
+    data= await hien_sinh_vien_id_db(id)
+    return CustomResponse(code=status.HTTP_200_OK,result=data)
 
-@app.get("/khoa/hienthi/tatca", response_model=List[KhoaResponse])
+@app.get("/khoa/hienthi/tatca", response_model=CustomResponse)
 async def hien_ds_khoa():
-    return await hien_ds_khoa_db()
+    data= await hien_ds_khoa_db()
+    return CustomResponse(code=status.HTTP_200_OK,result=data)
 
-@app.get("/khoa/hienthi/ten", response_model=List[KhoaResponse])
+@app.get("/khoa/hienthi/ten", response_model=CustomResponse)
 async def hien_khoa_theo_ten(ten:str=Query(...)):
-    return await hien_khoa_ten_db(ten)
+    data= await hien_khoa_ten_db(ten)
+    return CustomResponse(code=status.HTTP_200_OK,result=data)
 
-@app.get("/lop/hienthi/tatca", response_model=List[LopHocResponse])
+@app.get("/lop/hienthi/tatca", response_model=CustomResponse)
 async def hien_ds_lop():
-    return await hien_ds_lop_db()
+    data= await hien_ds_lop_db()
+    return CustomResponse(code=status.HTTP_200_OK,result=data)
 #######################################################################################
-@app.patch("/sinhvien/sua/{id}",response_model=SinhVienResponse)
+@app.patch("/sinhvien/sua/{id}",response_model=CustomResponse)
 async def sua_sinh_vien(id: int =Path(...), sinhVienRequest: SinhVienRequest = Body()):
-    return await sua_sinh_vien_db(id,sinhVienRequest)
+    data= await sua_sinh_vien_db(id,sinhVienRequest)
+    return CustomResponse(code=status.HTTP_200_OK,result=data)
 
-@app.patch("/khoa/sua/{id}",response_model=KhoaResponse)
+@app.patch("/khoa/sua/{id}",response_model=CustomResponse)
 async def sua_khoa(id: str =Path(...), khoaRequest: KhoaRequest = Body()):
-    return await sua_khoa_db(id,khoaRequest)
+    data = await sua_khoa_db(id,khoaRequest)
+    return CustomResponse(code=status.HTTP_200_OK,result=data)
 
-@app.patch("/lop/sua/{id}",response_model=LopHocResponse)
+@app.patch("/lop/sua/{id}",response_model=CustomResponse)
 async def sua_lop(id: str =Path(...), lopHocRequest: LopHocRequest = Body()):
-    return await sua_lop_db(id,lopHocRequest)
+    data= await sua_lop_db(id,lopHocRequest)
+    return CustomResponse(code=status.HTTP_200_OK,result=data)
 #######################################################################################
 
-@app.delete("/sinhvien/xoa/",response_model=SinhVienResponse)
+@app.delete("/sinhvien/xoa/",response_model=CustomResponse)
 async def xoa_sinh_vien_theo_id(id: int = Query(...)):
-    return await xoa_sinh_vien_db(id)
+    data= await xoa_sinh_vien_db(id)
+    return CustomResponse(code=status.HTTP_200_OK,result=data)
 
-@app.delete("/khoa/xoa/",response_model=KhoaResponse)
+@app.delete("/khoa/xoa/",response_model=CustomResponse)
 async def xoa_khoa_theo_id(id: str = Query(...)):
-    return await xoa_khoa_db(id)
+    data= await xoa_khoa_db(id)
+    return CustomResponse(code=status.HTTP_200_OK,result=data)
 
-@app.delete("/lophoc/xoa/",response_model=LopHocResponse)
+@app.delete("/lophoc/xoa/",response_model=CustomResponse)
 async def xoa_lop_theo_id(id: str = Query(...)):
-    return await xoa_lop_db(id)
+    data= await xoa_lop_db(id)
+    return CustomResponse(code=status.HTTP_200_OK,result=data)
+
+
+
+
+@app.exception_handler(RequestValidationError)
+async def custom_validation_exception_handler(request: Request, exc: RequestValidationError):
+    """
+    Custom exception handler để định dạng lại lỗi xác thực Pydantic.
+    Cố gắng lấy thông báo lỗi cụ thể từ lỗi đầu tiên.
+    """
+
+    # Mặc định là một thông báo chung
+    error_message_to_display = "Dữ liệu đầu vào không hợp lệ. Vui lòng kiểm tra các trường đã gửi."
+
+    # Cố gắng lấy thông báo lỗi cụ thể từ lỗi đầu tiên nếu có
+    if exc.errors():
+        first_error = exc.errors()[0]
+        # Lấy msg từ lỗi đầu tiên.
+        # Hoặc có thể lấy thông báo lỗi từ ctx['error'] nếu đó là ValueError từ custom validator
+        if 'msg' in first_error:
+            # Pydantic v2 thường có 'msg' chứa thông báo lỗi tổng quát (e.g., "Value error, Giới tính phải là 'Nam' hoặc 'Nữ'")
+            # và 'ctx' chứa đối tượng lỗi gốc.
+            # Bạn có thể chọn cái nào phù hợp hơn.
+            # Ở đây, tôi sẽ ưu tiên thông báo từ ctx['error'] nếu nó là ValueError gốc.
+            if 'ctx' in first_error and 'error' in first_error['ctx'] and isinstance(first_error['ctx']['error'], ValueError):
+                error_message_to_display = str(first_error['ctx']['error'])
+            else:
+                error_message_to_display = first_error['msg']
+        elif 'type' in first_error:
+            error_message_to_display = f"Lỗi xác thực kiểu dữ liệu: {first_error['type']}"
+
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        content={
+            "status": "error",
+            "code": status.HTTP_422_UNPROCESSABLE_ENTITY,
+            "message": error_message_to_display, # Sử dụng thông báo lỗi cụ thể
+            # "timestamp": datetime.now().isoformat() # Tùy chọn
+        },
+    )
+    
+@app.exception_handler(ValueError)
+async def validation_value_error(request: Request, exc: ValueError):
+    custom_error_response= CustomResponse(
+        code= status.HTTP_422_UNPROCESSABLE_ENTITY,
+        status= "error",
+        result= exc.message
+    )
+    
+    return JSONResponse(
+        status_code= status.HTTP_422_UNPROCESSABLE_ENTITY,
+        content=custom_error_response
+    )
+    
+@app.exception_handler(TypeError)
+async def validation_value_error(request: Request, exc: TypeError):
+    custom_error_response= CustomResponse(
+        code= status.HTTP_422_UNPROCESSABLE_ENTITY,
+        status= "error",
+        result= exc.message
+    )
+    
+    return JSONResponse(
+        status_code= status.HTTP_417_EXPECTATION_FAILED,
+        content=custom_error_response
+    )
+
+@app.exception_handler(AttributeError)
+async def validation_value_error(request: Request, exc: AttributeError):
+    custom_error_response= CustomResponse(
+        code= status.HTTP_422_UNPROCESSABLE_ENTITY,
+        status= "error",
+        result= exc.message
+    )
+    
+    return JSONResponse(
+        status_code= status.HTTP_417_EXPECTATION_FAILED,
+        content=custom_error_response
+    )
+
+@app.exception_handler(CustomResponseException)
+async def validation_value_error(request: Request, exc: CustomResponseException):
+    custom_error_response= CustomResponse(
+        code= status.HTTP_422_UNPROCESSABLE_ENTITY,
+        status= "error",
+        result= exc.message
+    )
+    
+    return JSONResponse(
+        status_code= status.HTTP_417_EXPECTATION_FAILED,
+        content=custom_error_response.model_dump()
+    )
+    
+@app.exception_handler(AttributeError)
+async def validation_value_error(request: Request, exc: AttributeError):
+    custom_error_response= CustomResponse(
+        code= status.HTTP_422_UNPROCESSABLE_ENTITY,
+        status= "error",
+        result= exc.message
+    )
+    
+    return JSONResponse(
+        status_code= status.HTTP_417_EXPECTATION_FAILED,
+        content=custom_error_response.model_dump()
+    )
