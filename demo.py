@@ -1,3 +1,4 @@
+import os
 import re
 from typing import Any, List, Optional, Set
 from fastapi import Body, Depends, FastAPI, HTTPException, Header, Path, Request, status, Query #import class FastAPI() từ thư viện fastapi, 
@@ -13,6 +14,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 import asyncio
+from urllib.parse import quote_plus
 
 class Khoa(SQLModel,table = True):
     id : Optional[str] = Field(default=None,primary_key=True)
@@ -167,16 +169,16 @@ class CustomResponseException(Exception):
         super().__init__(self.message)
     
 
-DATABASE_URL_ASYNC = URL.create(
-    drivername="mysql+aiomysql",
-    username="root",
-    password="",
-    host="localhost",
-    port=3306,
-    database="quan_li_sinh_vien"
-)
+DB_USER = os.getenv("MYSQL_USER", "root")
+DB_PASS = os.getenv("MYSQL_PASSWORD", "default_password")
+DB_HOST = os.getenv("MYSQL_HOST", "db")  # Changed from localhost to db for Docker
+DB_PORT = os.getenv("MYSQL_PORT", "3306")
+DB_NAME = os.getenv("MYSQL_DATABASE", "quan_li_sinh_vien")
 
-async_engine = create_async_engine(DATABASE_URL_ASYNC, echo=True)
+# Build the database URL
+DATABASE_URL = f"mysql+aiomysql://{DB_USER}:{quote_plus(DB_PASS)}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+
+async_engine = create_async_engine(DATABASE_URL, echo=True)
 
 async def create_db_and_tables():
     async with async_engine.begin() as conn:

@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+instance/
+.vscode/
+.git/
+.gitignore
+.env
+.DS_Store # macOS specific
+
+# Database files for SQLite (nếu bạn dùng SQLite cho dev)
+*.db
+*.sqlite3
