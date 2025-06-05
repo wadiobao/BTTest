@@ -1,32 +1,20 @@
-import os
-import re
-from typing import Any, List, Optional, Set
-from fastapi import Body, Depends, FastAPI, HTTPException, Header, Path, Request, status, Query #import class FastAPI() từ thư viện fastapi, 
-from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from pydantic import BaseModel, EmailStr, Field, HttpUrl, field_validator, validator
-from sqlalchemy import URL
-from sqlmodel import Field, Relationship, SQLModel, extract, select 
-from sqlalchemy.ext.asyncio import create_async_engine
-from datetime import date, datetime, timedelta
+from typing import List, Optional
 from sqlmodel.ext.asyncio.session import AsyncSession
-from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
-import asyncio
-from urllib.parse import quote_plus
+from sqlalchemy import select, extract
+from datetime import datetime
 
 from app.exceptions.CustomResponseException import CustomResponseException
-from app.models.MainModels import Khoa,SinhVien,LopHoc
+from app.models.MainModels import Khoa, SinhVien
 from app.models.SinhVienRequest import SinhVienRequest
-from app.models.SinhVienResponse import SinhVienResponse
+from app.models.response_models import SinhVienResponse
 from app.utils.mapper import map_sinhvien_to_response
 
-class SinhVien:
+class SinhVienService:
     def __init__(self, session: AsyncSession):
         self.session = session
     
-    async def them_sinh_vien_db(self,sinhVienRequest: SinhVienRequest)-> Optional[SinhVienResponse]:
+    async def them_sinh_vien_db(self, sinhVienRequest: SinhVienRequest) -> Optional[SinhVienResponse]:
         khoa = await self.session.get(Khoa, sinhVienRequest.khoa_id)
         if not khoa:
             raise CustomResponseException(
@@ -50,7 +38,7 @@ class SinhVien:
         sinhVienResponses = [map_sinhvien_to_response(sv) for sv in sinhVienList]
         return sinhVienResponses
     
-    async def hien_ds_sinh_vien_tuoi_db(self,order:str) -> Optional[List[SinhVienResponse]]:
+    async def hien_ds_sinh_vien_tuoi_db(self, order: str) -> Optional[List[SinhVienResponse]]:
         current_year = datetime.now().year
         stmt = (
             select(SinhVien)
@@ -70,7 +58,7 @@ class SinhVien:
         sinhVienResponses = [map_sinhvien_to_response(sv) for sv in sinhVienList]
         return sinhVienResponses
     
-    async def hien_sinh_vien_id_db(self,id: int) -> Optional[SinhVienResponse]:
+    async def hien_sinh_vien_id_db(self, id: int) -> Optional[SinhVienResponse]:
         stmt = (
             select(SinhVien)
             .options(
@@ -82,11 +70,11 @@ class SinhVien:
         sinhVien = result.scalar_one_or_none()
         if not sinhVien:
             raise CustomResponseException(
-                message="Sinh viên không  tồn tại")
+                message="Sinh viên không tồn tại")
         sinhVienResponse = map_sinhvien_to_response(sinhVien)
         return sinhVienResponse
     
-    async def hien_sinh_vien_ten_db(self,ten: str) -> Optional[List[SinhVienResponse]]:
+    async def hien_sinh_vien_ten_db(self, ten: str) -> Optional[List[SinhVienResponse]]:
         stmt = (
             select(SinhVien)
             .options(
@@ -98,20 +86,20 @@ class SinhVien:
         sinhVienList = result.scalars().all()
         if not sinhVienList:
             raise CustomResponseException(
-                message="Sinh viên không  tồn tại")
+                message="Sinh viên không tồn tại")
         
         sinhVienResponses = [map_sinhvien_to_response(sv) for sv in sinhVienList]
         return sinhVienResponses
     
-    async def sua_sinh_vien_db(self,id: int,sinhVienRequest: SinhVienRequest) -> Optional[SinhVienResponse]:
+    async def sua_sinh_vien_db(self, id: int, sinhVienRequest: SinhVienRequest) -> Optional[SinhVienResponse]:
         khoa = await self.session.get(Khoa, sinhVienRequest.khoa_id)
         if not khoa:
             raise CustomResponseException(
                 message="Khoa không tồn tại")
-        sinhVien = await self.session.get(SinhVien,id)
+        sinhVien = await self.session.get(SinhVien, id)
         if not sinhVien:
             raise CustomResponseException(
-                message="Sinh viên không  tồn tại")
+                message="Sinh viên không tồn tại")
         sinhVien_data = sinhVienRequest.model_dump(exclude_unset=True)
         sinhVien.sqlmodel_update(sinhVien_data)
         self.session.add(sinhVien)
@@ -120,7 +108,7 @@ class SinhVien:
         sinhVienResponse = map_sinhvien_to_response(sinhVien)
         return sinhVienResponse
     
-    async def xoa_sinh_vien_db(self,id:int)-> Optional[SinhVienResponse]:
+    async def xoa_sinh_vien_db(self, id: int) -> Optional[SinhVienResponse]:
         stmt = (
             select(SinhVien)
             .options(
@@ -132,7 +120,7 @@ class SinhVien:
         sinhVien = result.scalar_one_or_none()
         if not sinhVien:
             raise CustomResponseException(
-                message="Sinh viên không  tồn tại")
+                message="Sinh viên không tồn tại")
         sinhVienResponse = map_sinhvien_to_response(sinhVien)
         sinhVien.ds_lop_hoc = []
         sinhVien.khoa = None

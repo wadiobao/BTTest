@@ -1,20 +1,7 @@
-import os
-import re
-from typing import Any, List, Optional, Set
-from fastapi import Body, Depends, FastAPI, HTTPException, Header, Path, Request, status, Query #import class FastAPI() từ thư viện fastapi, 
-from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from pydantic import BaseModel, EmailStr, Field, HttpUrl, field_validator, validator
-from sqlalchemy import URL
-from sqlmodel import Field, Relationship, SQLModel, extract, select 
-from sqlalchemy.ext.asyncio import create_async_engine
-from datetime import date, datetime, timedelta
+from typing import List, Optional
 from sqlmodel.ext.asyncio.session import AsyncSession
-from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
-import asyncio
-from urllib.parse import quote_plus
+from sqlalchemy import select
 
 from app.exceptions.CustomResponseException import CustomResponseException
 from app.models.LopHocRequest import LopHocRequest

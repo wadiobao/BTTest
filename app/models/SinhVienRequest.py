@@ -16,6 +16,8 @@ from sqlalchemy.orm import selectinload
 import asyncio
 from urllib.parse import quote_plus
 
+from app.exceptions.CustomResponseException import CustomResponseException
+
 class SinhVienRequest(SQLModel):
     ten_sinh_vien: Optional[str] = None
     gioi_tinh: Optional[str] = None
