@@ -47,7 +47,7 @@ Nhiệm vụ của bạn là trả lời câu hỏi của người dùng CHỈ d
     api_key = "AIzaSyDFsMDHe3sYGTV8xLNO14smb2NPrlBLLK8"
 
     @staticmethod
-    def get_response(request: ChatRequest, khoa :str):
+    def get_response_with_context_from_database(request: ChatRequest, khoa :str):
         prompt = f"{request.prompt} + {khoa}"
         genai.configure(api_key=GeminiService.api_key)
         config = GenerationConfig(presence_penalty=0.1,frequency_penalty=0.1)
@@ -55,19 +55,10 @@ Nhiệm vụ của bạn là trả lời câu hỏi của người dùng CHỈ d
         result = model1.generate_content("Tạo 10 câu trả lời và Chọn ra 1 format trả lời xuất hiện nhiều nhất và trả về 1 câu trả lời thuộc format đó" + prompt)
 
         return result.text
-    
-    @staticmethod
-    def get_response_with_context(request: ChatRequest):
-        genai.configure(api_key=GeminiService.api_key)
-        model = genai.GenerativeModel(model_name="gemini-2.0-flash",system_instruction=GeminiService.system_instruction)
-        response = model.generate_content(request.prompt, request.context)
-        return response.text
 
     @staticmethod
-    async def get_response_with_context_from_database(request: ChatRequest, session: AsyncSession):
-        khoa = await KhoaService.hien_ds_khoa_db()
+    def get_response(request: ChatRequest):
         genai.configure(api_key=GeminiService.api_key)
-        model = genai.GenerativeModel(model_name="gemini-2.0-flash",system_instruction=GeminiService.system_instruction)
-        context = f"Khoa: {khoa}"
-        response = model.generate_content(request.prompt, context)
+        model = genai.GenerativeModel(model_name="gemini-2.0-flash")
+        response = model.generate_content(request.prompt)
         return response.text

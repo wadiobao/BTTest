@@ -16,6 +16,9 @@ from sqlalchemy.orm import selectinload
 import asyncio
 from urllib.parse import quote_plus
 
+from app.models.MainModels import LopHoc
+f
+
 class SinhVienResponse(SQLModel):
     id: Optional[int] = None
     ten_sinh_vien: str
@@ -25,4 +28,4 @@ class SinhVienResponse(SQLModel):
     email: str
     que_quan: str
     khoa: Optional[str]
-    ds_lop_hoc: Optional[List["LopHoc"]]
+    ds_lop_hoc: Optional[List[LopHoc]]

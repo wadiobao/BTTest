@@ -16,7 +16,9 @@ from sqlalchemy.orm import selectinload
 import asyncio
 from urllib.parse import quote_plus
 
+from app.models.MainModels import SinhVien
+
 class KhoaResponse(SQLModel):
     id : str
     ten_khoa: str
-    ds_sinh_vien: Optional[List["SinhVien"]]
+    ds_sinh_vien: Optional[List[SinhVien]]
