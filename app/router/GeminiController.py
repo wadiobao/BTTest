@@ -1,7 +1,7 @@
 import os
 import re
 from typing import Any, List, Optional, Set
-from fastapi import APIRouter, Body, Depends, FastAPI, HTTPException, Header, Path, Request, status, Query #import class FastAPI() từ thư viện fastapi, 
+from fastapi import APIRouter, Body, Depends, FastAPI, File, HTTPException, Header, Path, Request, UploadFile, status, Query, Form #import class FastAPI() từ thư viện fastapi, 
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from sqlmodel import Field, Relationship, SQLModel, extract, select 
@@ -42,3 +42,9 @@ async def chat(request: ChatRequest, khoa_service: KhoaService = Depends(get_kho
 async def chat_database(request: ChatRequest):
     response = GeminiService.get_response(request)
     return CustomResponse(code=status.HTTP_200_OK,result=response)
+
+@router.post("/demo-rag/")
+async def demo_rag(prompt: str = Form(...), file: UploadFile = File(...)):
+    response = await GeminiService.rag_demo(prompt, file)
+    return CustomResponse(code=status.HTTP_200_OK, result=response)
+ 

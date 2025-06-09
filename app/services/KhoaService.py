@@ -1,4 +1,4 @@
-# app/services/khoa.py
+
 from typing import List, Optional
 from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlalchemy.orm import selectinload, joinedload

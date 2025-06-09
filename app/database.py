@@ -9,7 +9,7 @@ DB_HOST = os.getenv("MYSQL_HOST", "localhost")  # Changed from localhost to db f
 DB_PORT = os.getenv("MYSQL_PORT", "3306")
 DB_NAME = os.getenv("MYSQL_DATABASE", "quan_li_sinh_vien")
 
-DATABASE_URL = f"mysql+aiomysql://{DB_USER}:{quote_plus(DB_PASS)}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+DATABASE_URL = f"mysql+aiomysql://{DB_USER}:{quote_plus(DB_PASS)}@{DB_HOST}:{DB_PORT}/quan_li_sinh_vien"
 
 async_engine = create_async_engine(DATABASE_URL, echo=True)
 
