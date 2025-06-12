@@ -3,11 +3,12 @@ from typing import Any, List, Dict, Tuple
 import faiss
 
 from annotated_types import T
+from fastapi import UploadFile
 
 class IGeminiRepo(ABC):
     
     @abstractmethod
-    async def add(self, text: str) -> bool:
+    async def add(self, text: str,source: str) -> bool:
         pass
 
     @abstractmethod
@@ -25,4 +26,8 @@ class IGeminiRepo(ABC):
 
     @abstractmethod
     def get_embedding_model(self) -> Any:
+        pass
+
+    @abstractmethod
+    async def query_data(self,query:str) -> List[str]:
         pass

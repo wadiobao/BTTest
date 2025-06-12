@@ -1,6 +1,5 @@
-
 import os
-import pdfplumber
+import pymupdf
 import markdown2
 from bs4 import BeautifulSoup
 
@@ -16,9 +15,15 @@ def extract_text_from_file(filepath: str) -> str:
             return soup.get_text()
 
     elif ext == ".pdf":
-        with pdfplumber.open(filepath) as pdf:
-            pages = [page.extract_text() for page in pdf.pages if page.extract_text()]
-            return "\n".join(pages)
+        try:
+            doc = pymupdf.open(filepath)
+            text = ""
+            for page in doc:
+                text += page.get_text("text")
+            doc.close()
+            return text
+        except Exception as e:
+            raise ValueError(f"Lỗi khi đọc file PDF: {str(e)}")
 
     else:
         raise ValueError("Chỉ hỗ trợ file .md hoặc .pdf")

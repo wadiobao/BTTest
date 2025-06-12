@@ -17,6 +17,7 @@ from app.models.ChatRequest import ChatRequest
 from app.models.KhoaRequest import KhoaRequest
 from app.models.LopHocRequest import LopHocRequest
 from app.models.SinhVienRequest import SinhVienRequest
+from app.repository.IGeminiRepo import IGeminiRepo
 from app.services.GeminiService import GeminiService
 from app.services.SinhVienService import SinhVienService
 from app.services.KhoaService import KhoaService
@@ -24,27 +25,49 @@ from app.services.LopHocService import LopHocService
 from app.database import create_db_and_tables, get_session, async_engine
 from app.repository.SinhVienRepo import SinhVienRepo
 from app.repository.KhoaRepo import KhoaRepo
+from app.repository.GeminiRepo import GeminiRepo
 
 async def get_gemini_service(session: AsyncSession = Depends(get_session)) -> GeminiService:
-    return GeminiService(session)
+    repo = GeminiRepo(session)
+    return GeminiService(repo)
 async def get_khoa_service(session: AsyncSession = Depends(get_session)) -> KhoaService:
     return KhoaService(KhoaRepo(session))
 
 router = APIRouter(prefix="/chat")
 
-@router.post("/chat/database/")
-async def chat(request: ChatRequest, khoa_service: KhoaService = Depends(get_khoa_service)):
-    data = await khoa_service.hien_ds_khoa_db()
-    response = GeminiService.get_response_with_context_from_database(request,str(data))
-    return CustomResponse(code=status.HTTP_200_OK,result=response)
+# @router.post("/chat/database/")
+# async def chat(request: ChatRequest, khoa_service: KhoaService = Depends(get_khoa_service)):
+#     data = await khoa_service.hien_ds_khoa_db()
+#     response = GeminiService.get_response_with_context_from_database(request,str(data))
+#     return CustomResponse(code=status.HTTP_200_OK,result=response)
 
-@router.post("/chat/")
-async def chat_database(request: ChatRequest):
-    response = GeminiService.get_response(request)
-    return CustomResponse(code=status.HTTP_200_OK,result=response)
+# @router.post("/chat/")
+# async def chat_database(request: ChatRequest):
+#     response = GeminiService.get_response(request)
+#     return CustomResponse(code=status.HTTP_200_OK,result=response)
 
 @router.post("/demo-rag/")
-async def demo_rag(prompt: str = Form(...), file: UploadFile = File(...)):
-    response = await GeminiService.rag_demo(prompt, file)
+async def demo_rag(
+    prompt: str = Form(...), 
+    
+    gemini_service: GeminiService = Depends(get_gemini_service)
+):
+    response = await gemini_service.rag_demo(prompt=prompt)
     return CustomResponse(code=status.HTTP_200_OK, result=response)
- 
+
+@router.post("/add/")
+async def add_file(
+    file: UploadFile = File(...),
+    gemini_service: GeminiService = Depends(get_gemini_service)
+):
+    response = await gemini_service.add_file(file=file)
+    return CustomResponse(code=status.HTTP_200_OK, result=response)
+
+
+@router.post("/rag-summary/")
+async def rag_tom_tat(
+    prompt: str = Form(...), 
+    gemini_service: GeminiService = Depends(get_gemini_service)
+):
+    response = await gemini_service.rag_tom_tat(prompt=prompt)
+    return CustomResponse(code=status.HTTP_200_OK, result=response)

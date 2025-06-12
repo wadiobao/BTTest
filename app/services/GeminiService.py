@@ -46,21 +46,26 @@ Nhiệm vụ của bạn là trả lời câu hỏi của người dùng CHỈ d
 -   Câu trả lời không được chứa tên các biến
 -   Câu trả lời không được xuất xứ dữ liệu
     """
-    system_instruction_consistency = """
-    Bạn là một nhà phân tích nội dung
-    Nhiệm vụ của bạn là phân tích nội dung của câu trả lời và đảm bảo nó
-    -   Không có thông tin bí mật
-    -   Không có tên các biến
-    -   Không có thông tin xuất xứ dữ liệu
-    -   Có thể trả lời câu hỏi của người dùng
+    OMNI_PROMPT_TEMPLATE = """
+Bạn là một trợ lý AI phân tích và tóm tắt văn bản cực kỳ thông minh. Nhiệm vụ của bạn là dựa vào yêu cầu của người dùng và bối cảnh được cung cấp để đưa ra câu trả lời phù hợp nhất.
 
-    Bạn sẽ nhận được 1 danh sách câu trả lời
+Hãy tuân thủ các quy tắc sau:
+1.  Phân tích **YÊU CẦU GỐC CỦA NGƯỜI DÙNG**.
+2.  Nếu yêu cầu có vẻ là **"có trọng tâm"** (hỏi về một chủ đề, nhân vật, khái niệm cụ thể), hãy sử dụng **BỐI CẢNH** được cung cấp để trả lời chi tiết và chính xác cho câu hỏi đó.
+3.  Nếu yêu cầu có vẻ là **"tóm tắt chung"** (ví dụ: "tóm tắt văn bản", "nội dung chính là gì?"), hãy giả định rằng **BỐI CẢNH** là những phần quan trọng và đại diện nhất của toàn bộ tài liệu. Hãy tổng hợp các thông tin trong **BỐI CẢNH** để tạo ra một bản tóm tắt tổng thể.
+4.  Luôn trả lời dựa trên thông tin được cung cấp.
 
-    Bạn sẽ phải phân tích và đánh giá các câu trả lời và chọn 1 format câu trả lời mà có số câu trả lời có nhiều nhất
+---
+**BỐI CẢNH (Trích xuất từ tài liệu):**
+{context}
+---
 
-    Output: [nội dung chính câu trả lời theo format đã chọn]
+**YÊU CẦU GỐC CỦA NGƯỜI DÙNG:**
+"{user_query}"
+---
 
-    """
+**CÂU TRẢ LỜI CỦA BẠN:**
+"""
 
     api_key = "AIzaSyDFsMDHe3sYGTV8xLNO14smb2NPrlBLLK8"
 
@@ -94,30 +99,68 @@ Nhiệm vụ của bạn là trả lời câu hỏi của người dùng CHỈ d
                 temp_file.write(contents)
                 temp_file_path = temp_file.name
 
-            unclean_text = extract_text_from_file(temp_file_path)
-            os.remove(temp_file_path)
-            return preprocess_text(unclean_text)
+                unclean_text = extract_text_from_file(temp_file_path)
+                
+            return preprocess_text(unclean_text), file.filename
+
         except Exception as e:
             logger.error(f"Error processing file: {str(e)}")
             raise HTTPException(status_code=500, detail="Lỗi xử lý file")
+        finally:
+            if temp_file_path and os.path.exists(temp_file_path):
+                os.remove(temp_file_path)
 
 
-    async def rag_demo(self, prompt: str, file: UploadFile) -> str:
+    async def rag_demo(self, prompt: str) -> str:
         try:
-            # Process file
-            clean_text = await self.process_file(file)
+            test_rag = []
+            test_rag = await self.repo.query_data(prompt)
             
-            # Create embeddings and index using repository
-            index, id_to_text = self.repo.create_embeddings(clean_text)
+            context_for_llm = "\n\n---\n\n".join(test_rag)
+
+            print(context_for_llm)
             
-            # Search for similar texts using repository
-            retrieved_texts = self.repo.search_similar_texts(prompt, index, id_to_text)
-            context_for_llm = "\n\n---\n\n".join(retrieved_texts)
+            genai.configure(api_key=GeminiService.api_key)
+            model = genai.GenerativeModel(model_name="gemini-2.0-flash",system_instruction=context_for_llm)
+            response = model.generate_content(prompt)
+
+            return response.text
+
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"Unexpected error in rag_demo: {str(e)}")
+            raise HTTPException(status_code=500, detail="Lỗi không xác định")
+        
+    async def rag_tom_tat(self, prompt: str) -> str:
+        try:
+            test_rag = []
+            test_rag = await self.repo.query_data(prompt)
             
-            # Generate response
-            response = await self.generate_response(prompt, context_for_llm)
+            context_for_llm = "\n\n---\n\n".join(test_rag)
+            final_prompt = self.OMNI_PROMPT_TEMPLATE.format(
+                context=context_for_llm,
+                user_query=prompt
+            )
+            genai.configure(api_key=GeminiService.api_key)            
+            model = genai.GenerativeModel(model_name="gemini-2.0-flash")
+            response = model.generate_content(final_prompt)
+
+            return response.text
+
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"Unexpected error in rag_demo: {str(e)}")
+            raise HTTPException(status_code=500, detail="Lỗi không xác định")
+        
+    async def add_file(self, file:UploadFile) -> str:
+        try:
+        
+            clean_text,source = await self.process_file(file)
             
-            return response
+            is_add = await self.repo.add(clean_text,source)
+            return is_add
 
         except HTTPException:
             raise
