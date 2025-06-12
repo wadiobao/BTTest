@@ -14,25 +14,16 @@ from urllib.parse import quote_plus
 
 from app.exceptions.CustomResponseException import CustomResponse, CustomResponseException
 from app.exceptions.ExceptionHandler import exception_handler
-from app.models.ChatRequest import ChatRequest
-from app.models.KhoaRequest import KhoaRequest
-from app.models.LopHocRequest import LopHocRequest
-from app.models.SinhVienRequest import SinhVienRequest
-from app.router import GeminiController, KhoaController, LopHocController, SinhVienController
-from app.services.GeminiService import GeminiService
-from app.services.SinhVienService import SinhVienService
-from app.services.KhoaService import KhoaService
-from app.services.LopHocService import LopHocService
+from app.router import gemini_controller,sinh_vien_controller,khoa_controller,lop_hoc_controller
 from app.database import create_db_and_tables, get_session, async_engine
-from app.repository.SinhVienRepo import SinhVienRepo
-from app.repository.KhoaRepo import KhoaRepo
+
 
 app = FastAPI()
 
-app.include_router(SinhVienController.router)
-app.include_router(KhoaController.router)
-app.include_router(LopHocController.router)
-app.include_router(GeminiController.router)
+app.include_router(sinh_vien_controller.router)
+app.include_router(khoa_controller.router)
+app.include_router(lop_hoc_controller.router)
+app.include_router(gemini_controller.router)
 
 
 @app.on_event("startup")

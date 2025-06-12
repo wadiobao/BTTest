@@ -4,9 +4,9 @@ from sqlalchemy.orm import selectinload
 from sqlalchemy import select
 
 from app.exceptions.CustomResponseException import CustomResponseException
-from app.models.LopHocRequest import LopHocRequest
-from app.models.LopHocResponse import LopHocResponse
-from app.models.MainModels import LopHoc, SinhVien
+from app.models.lop_hoc_request import LopHocRequest
+from app.models.lop_hoc_response import LopHocResponse
+from app.models.main_models import LopHoc, SinhVien
 from app.utils.mapper import map_lop_to_response
 
 class LopHocService:

@@ -5,8 +5,8 @@ from sqlalchemy import extract, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.models.MainModels import SinhVien
-from app.repository.ISinhVienRepo import ISinhVienRepo
+from app.models.main_models import SinhVien
+from app.repository.i_sinh_vien_repo import ISinhVienRepo
 
     
 class SinhVienRepo(ISinhVienRepo):

@@ -7,11 +7,11 @@ from datetime import datetime
 
 from app.database import get_session
 from app.exceptions.CustomResponseException import CustomResponseException
-from app.models.MainModels import Khoa, SinhVien
-from app.models.SinhVienRequest import SinhVienRequest
+from app.models.main_models import Khoa, SinhVien
+from app.models.sinh_vien_request import SinhVienRequest
 from app.models.response_models import SinhVienResponse
-from app.repository.IKhoaRepo import IKhoaRepo
-from app.repository.ISinhVienRepo import ISinhVienRepo
+from app.repository.i_khoa_repo import IKhoaRepo
+from app.repository.i_sinh_vien_repo import ISinhVienRepo
 from app.utils.mapper import map_sinhvien_to_response
 
 class SinhVienService:

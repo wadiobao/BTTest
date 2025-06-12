@@ -16,7 +16,7 @@ from sqlalchemy.orm import selectinload
 import asyncio
 from urllib.parse import quote_plus
 
-from app.models.MainModels import SinhVien
+from app.models.main_models import SinhVien
 
 class LopHocResponse(SQLModel):
     id : str

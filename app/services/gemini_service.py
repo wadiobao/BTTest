@@ -19,14 +19,10 @@ from functools import lru_cache
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-from app.models.ChatRequest import ChatRequest
-from app.models.MainModels import Khoa, SinhVien, LopHoc
-from app.services.KhoaService import KhoaService
+from app.models.chat_request import ChatRequest
 from app.utils.data_cleaning import preprocess_text
 from app.utils.extract_text import extract_text_from_file
-from app.utils.mapper import map_khoa_to_response, map_sinhvien_to_response
-from app.repository.GeminiRepo import GeminiRepo
-from app.repository.IGeminiRepo import IGeminiRepo
+from app.repository.i_gemini_repo import IGeminiRepo
 
 class GeminiService:
 

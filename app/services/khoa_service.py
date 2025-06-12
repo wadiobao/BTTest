@@ -6,8 +6,8 @@ from sqlmodel import select
 from sqlalchemy.exc import IntegrityError
 
 from app.exceptions.CustomResponseException import CustomResponseException
-from app.models.MainModels import Khoa, SinhVien, LopHoc
-from app.models.KhoaRequest import KhoaRequest
+from app.models.main_models import Khoa, SinhVien, LopHoc
+from app.models.khoa_request import KhoaRequest
 from app.models.response_models import KhoaResponse
 from app.utils.mapper import map_khoa_to_response
 

@@ -13,17 +13,9 @@ import asyncio
 from urllib.parse import quote_plus
 
 from app.exceptions.CustomResponseException import CustomResponse, CustomResponseException
-from app.models.ChatRequest import ChatRequest
-from app.models.KhoaRequest import KhoaRequest
-from app.models.LopHocRequest import LopHocRequest
-from app.models.SinhVienRequest import SinhVienRequest
-from app.services.GeminiService import GeminiService
-from app.services.SinhVienService import SinhVienService
-from app.services.KhoaService import KhoaService
-from app.services.LopHocService import LopHocService
+from app.models.lop_hoc_request import LopHocRequest
+from app.services.lop_hoc_service import LopHocService
 from app.database import create_db_and_tables, get_session, async_engine
-from app.repository.SinhVienRepo import SinhVienRepo
-from app.repository.KhoaRepo import KhoaRepo
 
 async def get_lop_hoc_service(session: AsyncSession = Depends(get_session)) -> LopHocService:
     return LopHocService(session)

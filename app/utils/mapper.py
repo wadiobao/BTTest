@@ -1,4 +1,4 @@
-from app.models.MainModels import Khoa, SinhVien, LopHoc
+from app.models.main_models import Khoa, SinhVien, LopHoc
 from app.models.response_models import KhoaResponse, SinhVienResponse, LopHocResponse
 from datetime import datetime
 

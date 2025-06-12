@@ -13,19 +13,11 @@ import asyncio
 from urllib.parse import quote_plus
 
 from app.exceptions.CustomResponseException import CustomResponse, CustomResponseException
-from app.models.ChatRequest import ChatRequest
-from app.models.KhoaRequest import KhoaRequest
-from app.models.LopHocRequest import LopHocRequest
-from app.models.SinhVienRequest import SinhVienRequest
-from app.repository.IGeminiRepo import IGeminiRepo
-from app.services.GeminiService import GeminiService
-from app.services.SinhVienService import SinhVienService
-from app.services.KhoaService import KhoaService
-from app.services.LopHocService import LopHocService
+from app.services.gemini_service import GeminiService
+from app.services.khoa_service import KhoaService
 from app.database import create_db_and_tables, get_session, async_engine
-from app.repository.SinhVienRepo import SinhVienRepo
-from app.repository.KhoaRepo import KhoaRepo
-from app.repository.GeminiRepo import GeminiRepo
+from app.repository.khoa_repo import KhoaRepo
+from app.repository.gemini import GeminiRepo
 
 async def get_gemini_service(session: AsyncSession = Depends(get_session)) -> GeminiService:
     repo = GeminiRepo(session)

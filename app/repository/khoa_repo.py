@@ -4,8 +4,8 @@ from sqlalchemy import extract, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.models.MainModels import Khoa
-from app.repository.IKhoaRepo import IKhoaRepo
+from app.models.main_models import Khoa
+from app.repository.i_khoa_repo import IKhoaRepo
 
 
 class KhoaRepo(IKhoaRepo):
