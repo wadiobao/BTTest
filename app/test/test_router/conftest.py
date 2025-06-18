@@ -9,7 +9,7 @@ from datetime import date
 from app.main import app
 from app.database import get_session
 # Import all models to ensure they are registered with SQLModel
-from app.models.main_models import Khoa, SinhVien, LopHoc, SinhVienLopHoc
+from app.models.base_models.main_models import Khoa, SinhVien, LopHoc, SinhVienLopHoc
 
 # --- 1. Database Setup for Testing ---
 DATABASE_URL = "sqlite+aiosqlite:///./test.db"  # Using file-based SQLite for consistency

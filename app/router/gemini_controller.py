@@ -11,13 +11,18 @@ from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 import asyncio
 from urllib.parse import quote_plus
+import aiofiles
+from datetime import datetime
+from concurrent.futures import ThreadPoolExecutor
+import threading
 
-from app.exceptions.CustomResponseException import CustomResponse, CustomResponseException
+from app.exceptions import ApiResponse, ResponseException
 from app.services.gemini_service import GeminiService
 from app.services.khoa_service import KhoaService
 from app.database import create_db_and_tables, get_session, async_engine
 from app.repository.khoa_repo import KhoaRepo
 from app.repository.gemini import GeminiRepo
+from app.repository.gemini.document_store import DocumentStore
 
 async def get_gemini_service(session: AsyncSession = Depends(get_session)) -> GeminiService:
     repo = GeminiRepo(session)

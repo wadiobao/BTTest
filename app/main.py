@@ -4,20 +4,22 @@ from typing import Any, List, Optional, Set
 from fastapi import Body, Depends, FastAPI, HTTPException, Header, Path, Request, status, Query #import class FastAPI() từ thư viện fastapi, 
 import asyncio
 from urllib.parse import quote_plus
+from fastapi.middleware.cors import CORSMiddleware
 
-from .exceptions.CustomResponseException import CustomResponse, CustomResponseException
-from .exceptions.ExceptionHandler import exception_handler
-from .router import gemini_controller,sinh_vien_controller,khoa_controller,lop_hoc_controller
+from .exceptions import ApiResponse, ResponseException, setup_exception_handlers
+from .router import faculty_router, student_router, class_router, gemini_router
 from .database import create_db_and_tables, get_session, async_engine
 
 
-app = FastAPI()
+app = FastAPI(title="API Documentation", version="1.0.0")
 
-app.include_router(sinh_vien_controller.router)
-app.include_router(khoa_controller.router)
-app.include_router(lop_hoc_controller.router)
-app.include_router(gemini_controller.router)
+app.include_router(student_router.router)
+app.include_router(faculty_router.router)
+app.include_router(class_router.router)
+app.include_router(gemini_router.router)
 
+# Setup exception handlers
+setup_exception_handlers(app)
 
 @app.on_event("startup")
 async def start_up():
@@ -26,8 +28,6 @@ async def start_up():
 @app.on_event("shutdown")
 async def shutdown():
     await async_engine.dispose()
-
-exception_handler(app)
 
 @app.get("/")
 async def read_main():

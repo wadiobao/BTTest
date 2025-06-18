@@ -1,16 +1,17 @@
 import os
 import re
 from typing import Any, List, Optional, Set
-from fastapi import Body, Depends, FastAPI, HTTPException, Header, Path, Request, status, Query #import class FastAPI() từ thư viện fastapi, 
+from fastapi import Body, Depends, FastAPI, HTTPException, Header, Path, Request, status, Query
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from app.exceptions.CustomResponseException import CustomResponse, CustomResponseException
+from app.exceptions.response_models import ApiResponse, ResponseException
 
-def exception_handler(app:FastAPI):
+def setup_exception_handlers(app: FastAPI):
+    """Setup custom exception handlers for the FastAPI application"""
 
     @app.exception_handler(RequestValidationError)
-    async def custom_validation_exception_handler(request: Request, exc: RequestValidationError):
+    async def handle_validation_error(request: Request, exc: RequestValidationError):
         """
         Custom exception handler để định dạng lại lỗi xác thực Pydantic.
         Cố gắng lấy thông báo lỗi cụ thể từ lỗi đầu tiên.
@@ -47,8 +48,8 @@ def exception_handler(app:FastAPI):
         )
         
     @app.exception_handler(ValueError)
-    async def validation_value_error(request: Request, exc: ValueError):
-        custom_error_response = CustomResponse(
+    async def handle_value_error(request: Request, exc: ValueError):
+        custom_error_response = ApiResponse(
             code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             status="error",
             result=str(exc)
@@ -60,8 +61,8 @@ def exception_handler(app:FastAPI):
         )
         
     @app.exception_handler(TypeError)
-    async def validation_type_error(request: Request, exc: TypeError):
-        custom_error_response = CustomResponse(
+    async def handle_type_error(request: Request, exc: TypeError):
+        custom_error_response = ApiResponse(
             code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             status="error",
             result=str(exc)
@@ -73,8 +74,8 @@ def exception_handler(app:FastAPI):
         )
 
     @app.exception_handler(AttributeError)
-    async def validation_value_error(request: Request, exc: AttributeError):
-        custom_error_response = CustomResponse(
+    async def handle_attribute_error(request: Request, exc: AttributeError):
+        custom_error_response = ApiResponse(
             code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             status="error",
             result=str(exc)
@@ -85,15 +86,15 @@ def exception_handler(app:FastAPI):
             content=custom_error_response.model_dump()
         )
 
-    @app.exception_handler(CustomResponseException)
-    async def validation_value_error(request: Request, exc: CustomResponseException):
-        custom_error_response= CustomResponse(
-            code= status.HTTP_422_UNPROCESSABLE_ENTITY,
-            status= "error",
-            result= exc.message
+    @app.exception_handler(ResponseException)
+    async def handle_response_exception(request: Request, exc: ResponseException):
+        custom_error_response = ApiResponse(
+            code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status="error",
+            result=exc.message
         )
         
         return JSONResponse(
-            status_code= status.HTTP_417_EXPECTATION_FAILED,
+            status_code=status.HTTP_417_EXPECTATION_FAILED,
             content=custom_error_response.model_dump()
-        )
+        ) 

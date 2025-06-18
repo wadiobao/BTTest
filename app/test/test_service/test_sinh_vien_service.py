@@ -8,7 +8,7 @@ from app.database import async_engine
 from app.models.sinh_vien_request import SinhVienRequest
 import logging
 from sqlalchemy import select
-from app.models.main_models import SinhVien
+from app.models.base_models.main_models import SinhVien
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

@@ -19,7 +19,7 @@ from functools import lru_cache
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-from app.models.chat_request import ChatRequest
+from app.models.request_models.chat_request import ChatRequest
 from app.utils.data_cleaning import preprocess_text
 from app.utils.extract_text import extract_text_from_file
 from app.repository.i_gemini_repo import IGeminiRepo

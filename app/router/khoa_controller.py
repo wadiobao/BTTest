@@ -12,43 +12,44 @@ from sqlalchemy.orm import selectinload
 import asyncio
 from urllib.parse import quote_plus
 
-from app.exceptions.CustomResponseException import CustomResponse, CustomResponseException
-from app.models.khoa_request import KhoaRequest
+from app.exceptions import ApiResponse, ResponseException
+from app.models.khoa_request import KhoaRequest, KhoaCreate, KhoaUpdate, KhoaResponse
 from app.services.khoa_service import KhoaService
 from app.database import create_db_and_tables, get_session, async_engine
-from app.repository.khoa_repo import KhoaRepo
+from app.repository.faculty_repo import FacultyRepo
+from app.models.request_models import FacultyRequest
 
 async def get_khoa_service(session: AsyncSession = Depends(get_session)) -> KhoaService:
-    return KhoaService(KhoaRepo(session))
+    return KhoaService(FacultyRepo(session))
 
 router = APIRouter(prefix="/khoa")
 
-@router.post("/them/",response_model=CustomResponse)
-async def them_khoa(khoaRequest: KhoaRequest, khoa_service: KhoaService = Depends(get_khoa_service)):
+@router.post("/them/",response_model=ApiResponse)
+async def them_khoa(khoaRequest: FacultyRequest, khoa_service: KhoaService = Depends(get_khoa_service)):
     data = await khoa_service.them_khoa_db(khoaRequest)
-    return CustomResponse(code=status.HTTP_200_OK,result=data)
+    return ApiResponse(code=status.HTTP_200_OK,result=data)
 
-@router.get("/hienthi/tatca", response_model=CustomResponse)
+@router.get("/hienthi/tatca", response_model=ApiResponse)
 async def hien_ds_khoa(khoa_service: KhoaService = Depends(get_khoa_service)):
     data = await khoa_service.hien_ds_khoa_db()
-    return CustomResponse(code=status.HTTP_200_OK,result=data)
+    return ApiResponse(code=status.HTTP_200_OK,result=data)
 
-@router.get("/hienthi/ten", response_model=CustomResponse)
+@router.get("/hienthi/ten", response_model=ApiResponse)
 async def hien_khoa_theo_ten(ten:str=Query(...), khoa_service: KhoaService = Depends(get_khoa_service)):
     data = await khoa_service.hien_khoa_ten_db(ten)
-    return CustomResponse(code=status.HTTP_200_OK,result=data)
+    return ApiResponse(code=status.HTTP_200_OK,result=data)
 
-@router.patch("/sua/{id}",response_model=CustomResponse)
-async def sua_khoa(id: str =Path(...), khoaRequest: KhoaRequest = Body(), khoa_service: KhoaService = Depends(get_khoa_service)):
+@router.patch("/sua/{id}",response_model=ApiResponse)
+async def sua_khoa(id: str =Path(...), khoaRequest: FacultyRequest = Body(), khoa_service: KhoaService = Depends(get_khoa_service)):
     data = await khoa_service.cap_nhat_khoa_db(id,khoaRequest)
-    return CustomResponse(code=status.HTTP_200_OK,result=data)
+    return ApiResponse(code=status.HTTP_200_OK,result=data)
 
-@router.delete("/xoa/",response_model=CustomResponse)
+@router.delete("/xoa/",response_model=ApiResponse)
 async def xoa_khoa_theo_id(id: str = Query(...), khoa_service: KhoaService = Depends(get_khoa_service)):
     data = await khoa_service.xoa_khoa_db(id)
-    return CustomResponse(code=status.HTTP_200_OK,result=data)
+    return ApiResponse(code=status.HTTP_200_OK,result=data)
 
-@router.get("/hienthi/{id}", response_model=CustomResponse)
+@router.get("/hienthi/{id}", response_model=ApiResponse)
 async def hien_khoa_theo_id(id: str = Path(...), khoa_service: KhoaService = Depends(get_khoa_service)):
     data = await khoa_service.hien_khoa_theo_id_db(id)
-    return CustomResponse(code=status.HTTP_200_OK,result=data)
+    return ApiResponse(code=status.HTTP_200_OK,result=data)
