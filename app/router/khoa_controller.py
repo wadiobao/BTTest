@@ -13,8 +13,8 @@ import asyncio
 from urllib.parse import quote_plus
 
 from app.exceptions import ApiResponse, ResponseException
-from app.models.khoa_request import KhoaRequest, KhoaCreate, KhoaUpdate, KhoaResponse
-from app.services.khoa_service import KhoaService
+from app.models.request_models import KhoaRequest, KhoaCreate, KhoaUpdate, KhoaResponse
+from app.services.faculty_service import KhoaService
 from app.database import create_db_and_tables, get_session, async_engine
 from app.repository.faculty_repo import FacultyRepo
 from app.models.request_models import FacultyRequest

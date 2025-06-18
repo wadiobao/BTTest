@@ -18,9 +18,9 @@ import threading
 
 from app.exceptions import ApiResponse, ResponseException
 from app.services.gemini_service import GeminiService
-from app.services.khoa_service import KhoaService
+from app.services.faculty_service import KhoaService
 from app.database import create_db_and_tables, get_session, async_engine
-from app.repository.khoa_repo import KhoaRepo
+from app.repository.faculty_repo import KhoaRepo
 from app.repository.gemini import GeminiRepo
 from app.repository.gemini.document_store import DocumentStore
 

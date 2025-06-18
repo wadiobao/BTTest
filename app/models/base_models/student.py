@@ -21,4 +21,3 @@ class Student(TimeStampedModel, table=True):
     # Relationships
     faculty: Optional["Faculty"] = Relationship(back_populates="students")
     classes: List["Classes"] = Relationship(back_populates="students", link_model=StudentClass)
-

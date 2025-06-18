@@ -10,11 +10,8 @@ from datetime import datetime
 from app.database import get_session
 from app.exceptions import ResponseException
 from app.models.base_models import Faculty, Student, Class
-from app.models.sinh_vien_request import SinhVienRequest
 from app.models.response_models import SinhVienResponse
 from app.utils.mapper import map_sinhvien_to_response
-from app.repository.sinh_vien_repo import SinhVienRepo
-from app.repository.khoa_repo import KhoaRepo
 from app.models.request_models import StudentRequest
 from app.repository.student_repo import StudentRepo
 from app.repository.faculty_repo import FacultyRepo
