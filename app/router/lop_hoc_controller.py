@@ -16,28 +16,29 @@ from app.exceptions.CustomResponseException import CustomResponse, CustomRespons
 from app.models.lop_hoc_request import LopHocRequest
 from app.services.lop_hoc_service import LopHocService
 from app.database import create_db_and_tables, get_session, async_engine
+from app.repository.lop_hoc_repo import LopHocRepo
 
 async def get_lop_hoc_service(session: AsyncSession = Depends(get_session)) -> LopHocService:
-    return LopHocService(session)
+    return LopHocService(LopHocRepo(session))
 
 router = APIRouter(prefix="/lophoc")
 
 @router.post("/lop/them/",response_model=CustomResponse)
 async def them_lop(lopRequest: LopHocRequest, lop_hoc_service: LopHocService = Depends(get_lop_hoc_service)):
-    data = await lop_hoc_service.them_lop_db(lopRequest)
+    data = await lop_hoc_service.them_lop_hoc_db(lopRequest)
     return CustomResponse(code=status.HTTP_200_OK,result=data)
 
 @router.get("/lop/hienthi/tatca", response_model=CustomResponse)
 async def hien_ds_lop(lop_hoc_service: LopHocService = Depends(get_lop_hoc_service)):
-    data = await lop_hoc_service.hien_ds_lop_db()
+    data = await lop_hoc_service.hien_ds_lop_hoc_db()
     return CustomResponse(code=status.HTTP_200_OK,result=data)
 
 @router.patch("/lop/sua/{id}",response_model=CustomResponse)
 async def sua_lop(id: str =Path(...), lopHocRequest: LopHocRequest = Body(), lop_hoc_service: LopHocService = Depends(get_lop_hoc_service)):
-    data = await lop_hoc_service.sua_lop_db(id,lopHocRequest)
+    data = await lop_hoc_service.cap_nhat_lop_hoc_db(id,lopHocRequest)
     return CustomResponse(code=status.HTTP_200_OK,result=data)
 
 @router.delete("/lophoc/xoa/",response_model=CustomResponse)
 async def xoa_lop_theo_id(id: str = Query(...), lop_hoc_service: LopHocService  = Depends(get_lop_hoc_service)):
-    data = await lop_hoc_service.xoa_lop_db(id)
+    data = await lop_hoc_service.xoa_lop_hoc_db(id)
     return CustomResponse(code=status.HTTP_200_OK,result=data)

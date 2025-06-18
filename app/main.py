@@ -2,20 +2,13 @@ import os
 import re
 from typing import Any, List, Optional, Set
 from fastapi import Body, Depends, FastAPI, HTTPException, Header, Path, Request, status, Query #import class FastAPI() từ thư viện fastapi, 
-from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
-from sqlmodel import Field, Relationship, SQLModel, extract, select 
-from sqlalchemy.ext.asyncio import create_async_engine
-from sqlmodel.ext.asyncio.session import AsyncSession
-from sqlalchemy.future import select
-from sqlalchemy.orm import selectinload
 import asyncio
 from urllib.parse import quote_plus
 
-from app.exceptions.CustomResponseException import CustomResponse, CustomResponseException
-from app.exceptions.ExceptionHandler import exception_handler
-from app.router import gemini_controller,sinh_vien_controller,khoa_controller,lop_hoc_controller
-from app.database import create_db_and_tables, get_session, async_engine
+from .exceptions.CustomResponseException import CustomResponse, CustomResponseException
+from .exceptions.ExceptionHandler import exception_handler
+from .router import gemini_controller,sinh_vien_controller,khoa_controller,lop_hoc_controller
+from .database import create_db_and_tables, get_session, async_engine
 
 
 app = FastAPI()
@@ -36,3 +29,6 @@ async def shutdown():
 
 exception_handler(app)
 
+@app.get("/")
+async def read_main():
+    return {"msg": "Hello World"}

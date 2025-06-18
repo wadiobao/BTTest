@@ -48,7 +48,10 @@ Bạn là một trợ lý AI phân tích và tóm tắt văn bản cực kỳ th
 Hãy tuân thủ các quy tắc sau:
 1.  Phân tích **YÊU CẦU GỐC CỦA NGƯỜI DÙNG**.
 2.  Nếu yêu cầu có vẻ là **"có trọng tâm"** (hỏi về một chủ đề, nhân vật, khái niệm cụ thể), hãy sử dụng **BỐI CẢNH** được cung cấp để trả lời chi tiết và chính xác cho câu hỏi đó.
-3.  Nếu yêu cầu có vẻ là **"tóm tắt chung"** (ví dụ: "tóm tắt văn bản", "nội dung chính là gì?"), hãy giả định rằng **BỐI CẢNH** là những phần quan trọng và đại diện nhất của toàn bộ tài liệu. Hãy tổng hợp các thông tin trong **BỐI CẢNH** để tạo ra một bản tóm tắt tổng thể.
+3.  Nếu yêu cầu có vẻ là **"tóm tắt chung"** (ví dụ: "tóm tắt chung","nói về gì","chi tiết chính", "nội dung chính là gì?","tóm tắt", "tổng hợp", "summarize", "nói về gì", "viết về",
+    "chủ đề", "mục đích", "đề cập", "file này có gì",
+    "điểm chính", "key point", "ý chính", "luận điểm", "kết luận",
+    "khái quát"), hãy giả định rằng **BỐI CẢNH** là những phần quan trọng và đại diện nhất của toàn bộ tài liệu. Hãy tổng hợp các thông tin trong **BỐI CẢNH** để tạo ra một bản tóm tắt tổng thể.
 4.  Luôn trả lời dựa trên thông tin được cung cấp.
 
 ---
@@ -66,7 +69,7 @@ Hãy tuân thủ các quy tắc sau:
     api_key = "AIzaSyDFsMDHe3sYGTV8xLNO14smb2NPrlBLLK8"
 
     # Configuration
-    SUPPORTED_EXTENSIONS = [".md", ".pdf"]
+    SUPPORTED_EXTENSIONS = [".md", ".pdf",".txt"]
     CHUNK_SIZE = 256
     CHUNK_OVERLAP = 10
     TOP_K_RESULTS = 5
@@ -117,7 +120,7 @@ Hãy tuân thủ các quy tắc sau:
             print(context_for_llm)
             
             genai.configure(api_key=GeminiService.api_key)
-            model = genai.GenerativeModel(model_name="gemini-2.0-flash",system_instruction=context_for_llm)
+            model = genai.GenerativeModel(model_name=self.MODEL_NAME,system_instruction=context_for_llm)
             response = model.generate_content(prompt)
 
             return response.text

@@ -1,6 +1,9 @@
 import logging
-from typing import List, Optional
+from typing import Any, List, Optional
 from langchain.docstore.document import Document
+from sentence_transformers.cross_encoder import CrossEncoder
+from rank_bm25 import BM25Okapi
+import numpy as np
 
 from app.repository.gemini.vector_store import VectorStore
 from app.repository.gemini.document_store import DocumentStore
@@ -12,11 +15,14 @@ class QueryHandler:
         self,
         vector_store: VectorStore,
         document_store: DocumentStore,
-        top_k_results: int = 5
+        top_k_results: int = 100,
+        rerank_top_k: int = 10
     ):
         self.vector_store = vector_store
         self.document_store = document_store
         self.top_k_results = top_k_results
+        self.rerank_top_k = rerank_top_k
+        self.reranker = CrossEncoder('cross-encoder/ms-marco-minilm-l-6-v2')
     
     async def query(
         self, 
@@ -86,3 +92,86 @@ class QueryHandler:
         except Exception as e:
             logger.error(f"Lỗi khi truy vấn: {e}", exc_info=True)
             return [] 
+        
+    async def hybrid_query(
+        self,
+        query: str,
+        source_document: Optional[str] = None,
+        dense_weight: float = 0.7,
+        sparse_weight: float = 0.3
+    ) -> List[str]:
+        """
+        Thực hiện hybrid search kết hợp dense và sparse retrieval.
+        
+        Args:
+            query: Câu query cần tìm kiếm
+            source_document: Tài liệu nguồn cụ thể (nếu có)
+            dense_weight: Trọng số cho dense retrieval (0-1)
+            sparse_weight: Trọng số cho sparse retrieval (0-1)
+            
+        Returns:
+            List[str]: Danh sách các kết quả tìm được
+        """
+        try:
+            # 1. Lấy tất cả documents từ vector store
+            all_docs = await self.vector_store.get_all_documents(source_document)
+            if not all_docs:
+                return []
+                
+            # 2. Thực hiện dense retrieval (vector search)
+            dense_docs = await self.vector_store.search(
+                query=query,
+                k=self.top_k_results,
+                source_document=source_document
+            )
+            
+            # 3. Thực hiện sparse retrieval (BM25)
+            # Chuẩn bị corpus cho BM25
+            corpus = [doc.page_content for doc in all_docs]
+            tokenized_corpus = [doc.split() for doc in corpus]
+            bm25 = BM25Okapi(tokenized_corpus)
+            
+            # Tính điểm BM25
+            tokenized_query = query.split()
+            bm25_scores = bm25.get_scores(tokenized_query)
+            
+            # Chuẩn hóa điểm BM25 về thang 0-1
+            bm25_scores = (bm25_scores - np.min(bm25_scores)) / (np.max(bm25_scores) - np.min(bm25_scores))
+            
+            # 4. Kết hợp kết quả
+            combined_scores = {}
+            
+            # Thêm điểm dense retrieval
+            for doc in dense_docs:
+                doc_id = doc.metadata.get("parent_id")
+                if doc_id:
+                    combined_scores[doc_id] = dense_weight
+                    
+            # Thêm điểm sparse retrieval
+            for idx, score in enumerate(bm25_scores):
+                doc = all_docs[idx]
+                doc_id = doc.metadata.get("parent_id")
+                if doc_id:
+                    if doc_id in combined_scores:
+                        combined_scores[doc_id] += sparse_weight * score
+                    else:
+                        combined_scores[doc_id] = sparse_weight * score
+                        
+            # 5. Sắp xếp kết quả theo điểm số
+            sorted_doc_ids = sorted(
+                combined_scores.items(),
+                key=lambda x: x[1],
+                reverse=True
+            )[:self.rerank_top_k]
+            
+            # 6. Lấy nội dung parent documents
+            parent_ids = [doc_id for doc_id, _ in sorted_doc_ids]
+            parent_contents = await self.document_store.get_parent_chunks(parent_ids)
+            
+            logger.info(f"Hybrid search completed. Found {len(parent_contents)} results")
+            return parent_contents
+            
+        except Exception as e:
+            logger.error(f"Error in hybrid query: {e}", exc_info=True)
+            return []
+            

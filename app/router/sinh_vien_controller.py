@@ -34,17 +34,17 @@ async def hien_ds_sinh_vien123(sinh_vien_service: SinhVienService = Depends(get_
     data = await sinh_vien_service.hien_ds_sinh_vien_db()
     return CustomResponse(code=status.HTTP_200_OK, result=data)
 
-@router.get("/sinhvien/hienthi/tuoi", response_model=CustomResponse)
+@router.get("/hienthi/tuoi", response_model=CustomResponse)
 async def hien_ds_sinh_vien_tuoi_giam_dan(order: Optional[str] = "giam", sinh_vien_service: SinhVienService = Depends(get_sinh_vien_service)):
     data = await sinh_vien_service.hien_ds_sinh_vien_tuoi_db(order)
     return CustomResponse(code=status.HTTP_200_OK, result=data)
 
-@router.get("/sinhvien/hienthi/ten", response_model=CustomResponse)
+@router.get("/hienthi/ten", response_model=CustomResponse)
 async def hien_sinh_vien_theo_ten(ten: str = Query(...), sinh_vien_service: SinhVienService = Depends(get_sinh_vien_service)):
     data = await sinh_vien_service.hien_sinh_vien_ten_db(ten)
     return CustomResponse(code=status.HTTP_200_OK, result=data)
 
-@router.get("/sinhvien/hienthi/{id}", response_model=CustomResponse)
+@router.get("/hienthi/{id}", response_model=CustomResponse)
 async def hien_sinh_vien_theo_id(id: int = Path(...), sinh_vien_service: SinhVienService = Depends(get_sinh_vien_service)):
     data = await sinh_vien_service.hien_sinh_vien_id_db(id)
     return CustomResponse(code=status.HTTP_200_OK, result=data)

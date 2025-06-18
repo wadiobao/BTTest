@@ -1,4 +1,3 @@
-
 from typing import List, Optional
 from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlalchemy.orm import selectinload, joinedload
@@ -10,11 +9,12 @@ from app.models.main_models import Khoa, SinhVien, LopHoc
 from app.models.khoa_request import KhoaRequest
 from app.models.response_models import KhoaResponse
 from app.utils.mapper import map_khoa_to_response
+from app.repository.khoa_repo import KhoaRepo
 
 
 class KhoaService:
-    def __init__(self, session: AsyncSession):
-        self.session = session
+    def __init__(self, repo: KhoaRepo):
+        self.repo = repo
 
     async def them_khoa_db(self, khoaRequest: KhoaRequest):
         try:
@@ -22,12 +22,13 @@ class KhoaService:
                 id=khoaRequest.id,
                 ten_khoa=khoaRequest.ten_khoa
             )
-            self.session.add(khoa)
-            await self.session.commit()
-            await self.session.refresh(khoa)
+            khoa = await self.repo.add(khoa)
+            await self.repo.session.commit()
+            await self.repo.session.refresh(khoa)
+            # Load relationships to avoid MissingGreenlet error
+            await self.repo.session.refresh(khoa, attribute_names=['ds_sinh_vien'])
             return map_khoa_to_response(khoa)
         except IntegrityError as e:
-            await self.session.rollback()
             if "Duplicate entry" in str(e):
                 raise CustomResponseException(
                     message=f"Khoa với ID '{khoaRequest.id}' đã tồn tại")
@@ -35,66 +36,40 @@ class KhoaService:
                 message="Có lỗi xảy ra khi thêm khoa mới")
 
     async def hien_ds_khoa_db(self):
-        statement = (
-            select(Khoa)
-            .options(
-                selectinload(Khoa.ds_sinh_vien).selectinload(SinhVien.ds_lop_hoc)
-            )
-        )
-        result = await self.session.execute(statement)
-        khoa_list = result.scalars().all()
+        khoa_list = await self.repo.get_all()
         return [map_khoa_to_response(khoa) for khoa in khoa_list]
 
     async def hien_khoa_theo_id_db(self, id: str):
-        statement = (
-            select(Khoa)
-            .where(Khoa.id == id)
-            .options(
-                selectinload(Khoa.ds_sinh_vien).selectinload(SinhVien.ds_lop_hoc)
-            )
-        )
-        result = await self.session.execute(statement)
-        khoa = result.scalar_one_or_none()
+        khoa = await self.repo.get_by_id(id)
         if not khoa:
             raise CustomResponseException(
                 message=f"Không tìm thấy khoa với ID '{id}'")
         return map_khoa_to_response(khoa)
 
     async def cap_nhat_khoa_db(self, id: str, khoaRequest: KhoaRequest):
-        statement = (
-            select(Khoa)
-            .where(Khoa.id == id)
-            .options(
-                selectinload(Khoa.ds_sinh_vien).selectinload(SinhVien.ds_lop_hoc)
-            )
-        )
-        result = await self.session.execute(statement)
-        khoa = result.scalar_one_or_none()
+        khoa = await self.repo.get_by_id(id)
         if not khoa:
             raise CustomResponseException(
                 message=f"Không tìm thấy khoa với ID '{id}'")
         try:
-            khoa.ten_khoa = khoaRequest.ten_khoa
-            await self.session.commit()
-            await self.session.refresh(khoa)
+            khoa_data = khoaRequest.model_dump(exclude_unset=True)
+            khoa = await self.repo.update(id, khoa_data)
             return map_khoa_to_response(khoa)
         except IntegrityError as e:
-            await self.session.rollback()
             raise CustomResponseException(
                 message="Có lỗi xảy ra khi cập nhật khoa")
 
     async def xoa_khoa_db(self, id: str):
-        statement = select(Khoa).where(Khoa.id == id)
-        result = await self.session.execute(statement)
-        khoa = result.scalar_one_or_none()
+        khoa = await self.repo.get_by_id(id)
         if not khoa:
             raise CustomResponseException(
                 message=f"Không tìm thấy khoa với ID '{id}'")
         try:
-            await self.session.delete(khoa)
-            await self.session.commit()
+            success = await self.repo.delete(id)
+            if not success:
+                raise CustomResponseException(
+                    message="Không thể xóa khoa vì có sinh viên đang tham chiếu đến khoa này")
             return True
         except IntegrityError as e:
-            await self.session.rollback()
             raise CustomResponseException(
                 message="Không thể xóa khoa vì có sinh viên đang tham chiếu đến khoa này")

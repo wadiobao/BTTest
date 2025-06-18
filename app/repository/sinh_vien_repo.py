@@ -1,4 +1,3 @@
-
 from datetime import datetime
 from typing import Any, List
 from sqlalchemy import extract, select
@@ -94,7 +93,17 @@ class SinhVienRepo(ISinhVienRepo):
         return id
     
     async def delete(self,id:int) -> int:
-        sinhVien = await self.session.get(SinhVien,id)
+        stmt = (
+            select(SinhVien)
+            .options(
+                selectinload(SinhVien.ds_lop_hoc),
+                selectinload(SinhVien.khoa)
+            )
+        ).where(SinhVien.id == id)
+        result = await self.session.execute(stmt)
+        sinhVien = result.scalar_one_or_none()
+        if sinhVien is None:
+            return None
         sinhVien.ds_lop_hoc = []
         sinhVien.khoa = None
         await self.session.delete(sinhVien)

@@ -56,7 +56,7 @@ async def add_file(
     return CustomResponse(code=status.HTTP_200_OK, result=response)
 
 
-@router.post("/rag-summary/")
+@router.post("/summary/")
 async def rag_tom_tat(
     prompt: str = Form(...), 
     gemini_service: GeminiService = Depends(get_gemini_service)

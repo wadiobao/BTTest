@@ -35,17 +35,16 @@ class SinhVienService:
         return sinhVienResponses
     
     async def hien_ds_sinh_vien_tuoi_db(self, order: str) -> Optional[List[SinhVienResponse]]:
-        sinhVienList
         if order == "giam":
-            sinhVienList = self.sv_repo.display_by_age_desc()
+            sinhVienList = await self.sv_repo.display_by_age_desc()
         else:
-            sinhVienList = self.sv_repo.display_by_age_asc()
+            sinhVienList = await self.sv_repo.display_by_age_asc()
             
         sinhVienResponses = [map_sinhvien_to_response(sv) for sv in sinhVienList]
         return sinhVienResponses
     
     async def hien_sinh_vien_id_db(self, id: int) -> Optional[SinhVienResponse]:
-        sinhVien = self.sv_repo.display_by_id()
+        sinhVien = await self.sv_repo.display_by_id(id)
         if not sinhVien:
             raise CustomResponseException(
                 message="Sinh viên không tồn tại")
@@ -53,7 +52,7 @@ class SinhVienService:
         return sinhVienResponse
     
     async def hien_sinh_vien_ten_db(self, ten: str) -> Optional[List[SinhVienResponse]]:    
-        sinhVienList = self.sv_repo.display_by_name()
+        sinhVienList = await self.sv_repo.display_by_name(ten)
         if not sinhVienList:
             raise CustomResponseException(
                 message="Sinh viên không tồn tại")
@@ -73,14 +72,16 @@ class SinhVienService:
                 message="Sinh viên không tồn tại")
             
         sinhVien_data = sinhVienRequest.model_dump(exclude_unset=True)
-        sinhVien = self.sv_repo.update(id,sinhVien_data)
-        sinhVienResponse = map_sinhvien_to_response(sinhVien)
+        await self.sv_repo.update(id, sinhVien_data)
+        # Get the updated sinh vien object
+        updated_sinh_vien = await self.sv_repo.display_by_id(id)
+        sinhVienResponse = map_sinhvien_to_response(updated_sinh_vien)
         return sinhVienResponse
     
     async def xoa_sinh_vien_db(self, id: int) -> Optional[SinhVienResponse]:
-        sv_existed = self.sv_repo.check_existed(id)
+        sv_existed = await self.sv_repo.check_existed(id)
         if not sv_existed:
             raise CustomResponseException(
                 message="Sinh viên không tồn tại")
         
-        return self.sv_repo.delete(id)
+        return await self.sv_repo.delete(id)

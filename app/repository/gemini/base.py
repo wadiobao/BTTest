@@ -19,11 +19,6 @@ from app.repository.gemini.query import QueryHandler
 logger = logging.getLogger(__name__)
 
 class GeminiRepo(IGeminiRepo):
-    CHUNK_SIZE_PARENT = 5000
-    CHUNK_OVERLAP_PARENT = 1500
-    CHUNK_SIZE_CHILD = 1000
-    CHUNK_OVERLAP_CHILD = 300
-    TOP_K_RESULTS = 5
     EMBEDDING_MODEL = "all-MiniLM-L6-v2"
     
     def __init__(
@@ -31,16 +26,16 @@ class GeminiRepo(IGeminiRepo):
         session: AsyncSession,
         db_path: str = "parent_child_db",
         embedding_model: str = "all-MiniLM-L6-v2",
-        chunk_size_parent: int = 5000,
-        chunk_overlap_parent: int = 1500,
-        chunk_size_child: int = 1000,
-        chunk_overlap_child: int = 300,
-        top_k_results: int = 5
+        chunk_size_parent: int = 1024,
+        chunk_overlap_parent: int = 100,
+        chunk_size_child: int = 128,
+        chunk_overlap_child: int = 12,
+        top_k_results: int = 100
     ):
         """
         Khởi tạo tất cả các thành phần cần thiết một lần duy nhất.
         """
-        self.TOP_K_RESULTS = top_k_results
+        self.top_k_results = top_k_results
         self.session = session
         
         # Đảm bảo db_path là string
@@ -67,7 +62,7 @@ class GeminiRepo(IGeminiRepo):
         self.query_handler = QueryHandler(
             vector_store=self.vector_store,
             document_store=self.document_store,
-            top_k_results=self.TOP_K_RESULTS
+            top_k_results=self.top_k_results
         )
     
     @staticmethod
@@ -115,7 +110,7 @@ class GeminiRepo(IGeminiRepo):
         try:
             model = self.get_embedding_model()
             query_embedding = model.encode([query]).astype("float32")
-            D, I = index.search(query_embedding, self.TOP_K_RESULTS)
+            D, I = index.search(query_embedding, self.top_k_results)
             return [id_to_text[idx] for idx in I[0]]
         except Exception as e:
             logger.error(f"Error searching similar texts: {str(e)}")
@@ -147,4 +142,6 @@ class GeminiRepo(IGeminiRepo):
         """
         Truy vấn dữ liệu.
         """
-        return await self.query_handler.query(query, source_document) 
+        return await self.query_handler.hybrid_query(query, source_document) 
+    
+    

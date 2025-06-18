@@ -9,10 +9,10 @@ logger = logging.getLogger(__name__)
 class TextSplitter:
     def __init__(
         self,
-        chunk_size_parent: int = 5000,
-        chunk_overlap_parent: int = 1500,
-        chunk_size_child: int = 1000,
-        chunk_overlap_child: int = 300
+        chunk_size_parent: int = 2048,
+        chunk_overlap_parent: int = 200,
+        chunk_size_child: int = 256,
+        chunk_overlap_child: int = 25
     ):
         self.parent_splitter = RecursiveCharacterTextSplitter(
             chunk_size=chunk_size_parent,

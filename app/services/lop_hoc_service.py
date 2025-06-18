@@ -1,88 +1,69 @@
 from typing import List, Optional
-from sqlmodel.ext.asyncio.session import AsyncSession
-from sqlalchemy.orm import selectinload
-from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 
 from app.exceptions.CustomResponseException import CustomResponseException
+from app.models.main_models import LopHoc
 from app.models.lop_hoc_request import LopHocRequest
-from app.models.lop_hoc_response import LopHocResponse
-from app.models.main_models import LopHoc, SinhVien
-from app.utils.mapper import map_lop_to_response
+from app.models.response_models import LopHocResponse
+from app.utils.mapper import map_lop_hoc_to_response
+from app.repository.lop_hoc_repo import LopHocRepo
+
 
 class LopHocService:
-    def __init__(self, session: AsyncSession):
-        self.session = session
+    def __init__(self, repo: LopHocRepo):
+        self.repo = repo
 
-    async def them_lop_db(self,lopHocRequest: LopHocRequest)-> Optional[LopHocResponse]:
-    
-        lopHoc = await self.session.get(LopHoc, lopHocRequest.id)
-        if lopHoc:
-            raise CustomResponseException(
-                message="Lớp học đã tồn tại")
-        lopHoc = LopHoc.from_orm(lopHocRequest)
-        self.session.add(lopHoc)
-        await self.session.commit()
-        await self.session.refresh(lopHoc)
-        lopHocResponse = map_lop_to_response(lopHoc)
-        return lopHocResponse
-    
-    async def hien_ds_lop_db(self) -> Optional[List[LopHocResponse]]:
-        stmt = (
-            select(LopHoc) 
-            .options(
-                selectinload(LopHoc.ds_sinh_vien).selectinload(SinhVien.khoa)
+    async def them_lop_hoc_db(self, lop_hoc_request: LopHocRequest):
+        try:
+            lop_hoc = LopHoc(
+                id=lop_hoc_request.id,
+                ten_lop_hoc=lop_hoc_request.ten_lop_hoc,
+                si_so=lop_hoc_request.si_so
             )
-        )
-        result = await self.session.execute(stmt)
-        lopHocList = result.scalars().all()
-        lopHocResponses = [map_lop_to_response(lh) for lh in lopHocList]
-        return lopHocResponses
-
-    async def sua_lop_db(self,id: str, lopHocRequest: LopHocRequest)-> Optional[LopHocResponse]:
-        result = await self.session.execute(
-            select(LopHoc)
-            .options(selectinload(LopHoc.ds_sinh_vien))
-            .where(LopHoc.id == id)
-        )
-        lopHoc = result.scalar_one_or_none()
-        if not lopHoc:
-            raise CustomResponseException(
-                message="Lớp không tồn tại")
-        lopHoc.ten_lop_hoc = lopHocRequest.ten_lop_hoc
-        new_sinh_vien_objects = []
-        for svid in lopHocRequest.ds_sinh_vien:
-            sinhVien = await self.session.get(SinhVien,svid)
-            if not sinhVien:
+            lop_hoc = await self.repo.add(lop_hoc)
+            return map_lop_hoc_to_response(lop_hoc)
+        except IntegrityError as e:
+            if "Duplicate entry" in str(e):
                 raise CustomResponseException(
-                message="có sinh viên không  tồn tại")
-            new_sinh_vien_objects.append(sinhVien)
-        lopHoc.ds_sinh_vien = new_sinh_vien_objects
-        self.session.add(lopHoc)
-        await self.session.commit()
-        await self.session.refresh(lopHoc)
-        lopResponse = map_lop_to_response(lopHoc)
-        return lopResponse
-    
-    async def xoa_lop_db(self,id:str)-> Optional[LopHocResponse]:
-        stmt = (
-            select(LopHoc)
-            .options(
-                selectinload(LopHoc.ds_sinh_vien).selectinload(SinhVien.khoa)
-            )
-        ).where(LopHoc.id==id)   
-        result = await self.session.execute(stmt)    
-        lopHoc = result.scalar_one_or_none()
-        
-        if not lopHoc:
+                    message=f"Lớp học với ID '{lop_hoc_request.id}' đã tồn tại")
             raise CustomResponseException(
-                message="Lớp không tồn tại")
-        
-        lopHocResponse = map_lop_to_response(lopHoc)
-        
-        if lopHoc.ds_sinh_vien:
-            lopHoc.ds_sinh_vien.clear()
-        
-        await self.session.delete(lopHoc)
-        await self.session.commit()
-        
-        return lopHocResponse
+                message="Có lỗi xảy ra khi thêm lớp học mới")
+
+    async def hien_ds_lop_hoc_db(self):
+        lop_hoc_list = await self.repo.get_all()
+        return [map_lop_hoc_to_response(lop_hoc) for lop_hoc in lop_hoc_list]
+
+    async def hien_lop_hoc_theo_id_db(self, id: str):
+        lop_hoc = await self.repo.get_by_id(id)
+        if not lop_hoc:
+            raise CustomResponseException(
+                message=f"Không tìm thấy lớp học với ID '{id}'")
+        return map_lop_hoc_to_response(lop_hoc)
+
+    async def cap_nhat_lop_hoc_db(self, id: str, lop_hoc_request: LopHocRequest):
+        lop_hoc = await self.repo.get_by_id(id)
+        if not lop_hoc:
+            raise CustomResponseException(
+                message=f"Không tìm thấy lớp học với ID '{id}'")
+        try:
+            lop_hoc_data = lop_hoc_request.model_dump(exclude_unset=True)
+            lop_hoc = await self.repo.update(id, lop_hoc_data)
+            return map_lop_hoc_to_response(lop_hoc)
+        except IntegrityError as e:
+            raise CustomResponseException(
+                message="Có lỗi xảy ra khi cập nhật lớp học")
+
+    async def xoa_lop_hoc_db(self, id: str):
+        lop_hoc = await self.repo.get_by_id(id)
+        if not lop_hoc:
+            raise CustomResponseException(
+                message=f"Không tìm thấy lớp học với ID '{id}'")
+        try:
+            success = await self.repo.delete(id)
+            if not success:
+                raise CustomResponseException(
+                    message="Không thể xóa lớp học vì có sinh viên đang tham chiếu đến lớp học này")
+            return True
+        except IntegrityError as e:
+            raise CustomResponseException(
+                message="Không thể xóa lớp học vì có sinh viên đang tham chiếu đến lớp học này")

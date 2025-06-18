@@ -28,4 +28,23 @@ def map_khoa_to_response(khoa: Khoa) -> KhoaResponse:
         ten_khoa=khoa.ten_khoa,
         ds_sinh_vien=[map_sinhvien_to_response(sv) for sv in khoa.ds_sinh_vien] if hasattr(khoa, 'ds_sinh_vien') and khoa.ds_sinh_vien else None
     )
+
+def map_lop_hoc_to_response(lop_hoc: LopHoc) -> LopHocResponse:
+    return LopHocResponse(
+        id=lop_hoc.id,
+        ten_lop_hoc=lop_hoc.ten_lop_hoc,
+        si_so=lop_hoc.si_so
+    )
+
+def map_sinh_vien_to_response(sinh_vien: SinhVien) -> SinhVienResponse:
+    return SinhVienResponse(
+        id=sinh_vien.id,
+        ten_sinh_vien=sinh_vien.ten_sinh_vien,
+        gioi_tinh=sinh_vien.gioi_tinh,
+        ngay_sinh=sinh_vien.ngay_sinh,
+        sdt=sinh_vien.sdt,
+        email=sinh_vien.email,
+        que_quan=sinh_vien.que_quan,
+        khoa_id=sinh_vien.khoa_id
+    )
     
