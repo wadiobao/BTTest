@@ -18,7 +18,7 @@ def setup_exception_handlers(app: FastAPI):
         """
 
         # Mặc định là một thông báo chung
-        error_message_to_display = "Dữ liệu đầu vào không hợp lệ. Vui lòng kiểm tra các trường đã gửi."
+        error_message_to_display = "Invalid input data. Please check your submitted fields."
 
         # Cố gắng lấy thông báo lỗi cụ thể từ lỗi đầu tiên nếu có
         if exc.errors():
@@ -35,66 +35,57 @@ def setup_exception_handlers(app: FastAPI):
                 else:
                     error_message_to_display = first_error['msg']
             elif 'type' in first_error:
-                error_message_to_display = f"Lỗi xác thực kiểu dữ liệu: {first_error['type']}"
+                error_message_to_display = f"Data type validation error: {first_error['type']}"
 
         return JSONResponse(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             content={
                 "status": "error",
                 "code": status.HTTP_422_UNPROCESSABLE_ENTITY,
-                "message": error_message_to_display, # Sử dụng thông báo lỗi cụ thể
-                # "timestamp": datetime.now().isoformat() # Tùy chọn
+                "message": error_message_to_display,
             },
         )
         
     @app.exception_handler(ValueError)
     async def handle_value_error(request: Request, exc: ValueError):
-        custom_error_response = ApiResponse(
-            code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            status="error",
-            result=str(exc)
-        )
-        
         return JSONResponse(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            content=custom_error_response.model_dump()
+            content={
+                "status": "error",
+                "code": status.HTTP_422_UNPROCESSABLE_ENTITY,
+                "message": str(exc),
+            },
         )
         
     @app.exception_handler(TypeError)
     async def handle_type_error(request: Request, exc: TypeError):
-        custom_error_response = ApiResponse(
-            code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            status="error",
-            result=str(exc)
-        )
-        
         return JSONResponse(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            content=custom_error_response.model_dump()
+            content={
+                "status": "error",
+                "code": status.HTTP_422_UNPROCESSABLE_ENTITY,
+                "message": str(exc),
+            },
         )
 
     @app.exception_handler(AttributeError)
     async def handle_attribute_error(request: Request, exc: AttributeError):
-        custom_error_response = ApiResponse(
-            code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            status="error",
-            result=str(exc)
-        )
-        
         return JSONResponse(
-            status_code=status.HTTP_417_EXPECTATION_FAILED,
-            content=custom_error_response.model_dump()
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            content={
+                "status": "error",
+                "code": status.HTTP_422_UNPROCESSABLE_ENTITY,
+                "message": str(exc),
+            },
         )
 
     @app.exception_handler(ResponseException)
     async def handle_response_exception(request: Request, exc: ResponseException):
-        custom_error_response = ApiResponse(
-            code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            status="error",
-            result=exc.message
-        )
-        
         return JSONResponse(
-            status_code=status.HTTP_417_EXPECTATION_FAILED,
-            content=custom_error_response.model_dump()
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            content={
+                "status": "error",
+                "code": status.HTTP_422_UNPROCESSABLE_ENTITY,
+                "message": exc.message,
+            },
         ) 

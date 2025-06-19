@@ -3,8 +3,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from app.exceptions import ApiResponse
 from app.services.gemini_service import GeminiService
 from app.database import get_session
-from app.repository.gemini import GeminiRepo
-from app.repository.gemini.document_store import DocumentStore
+from app.repository.gemini_repo.gemini_repo import GeminiRepo
 
 async def get_gemini_service(session: AsyncSession = Depends(get_session)) -> GeminiService:
     repo = GeminiRepo(session)

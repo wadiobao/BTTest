@@ -22,48 +22,45 @@ logger = logging.getLogger(__name__)
 from app.models.request_models.chat_request import ChatRequest
 from app.utils.data_cleaning import preprocess_text
 from app.utils.extract_text import extract_text_from_file
-from app.repository.i_gemini_repo import IGeminiRepo
+from app.repository.gemini_repo.i_gemini_repo import IGeminiRepo
 
 class GeminiService:
 
     system_instruction_knowledge = """
-    Bạn là một trợ lý hỏi đáp tri thức.
-Bạn sẽ nhận được hai phần thông tin:
-1.  **Câu hỏi của người dùng:** Đây là câu hỏi mà người dùng muốn bạn trả lời.
-2.  **Dữ liệu từ cơ sở dữ liệu:** Đây là ngữ cảnh hoặc thông tin mà bạn phải sử dụng để trả lời câu hỏi.
+    You are a knowledge Q&A assistant.
+You will receive two pieces of information:
+1.  **User's question:** This is the question the user wants you to answer.
+2.  **Data from the database:** This is the context or information you must use to answer the question.
 
-Nhiệm vụ của bạn là trả lời câu hỏi của người dùng CHỈ dựa trên dữ liệu được cung cấp từ cơ sở dữ liệu.
+Your task is to answer the user's question ONLY based on the data provided from the database.
 
-**Các quy tắc:**
--   Nếu thông tin cần thiết để trả lời câu hỏi không có trong dữ liệu, hãy trả lời "Không tìm thấy thông tin liên quan trong dữ liệu."
--   Trả lời ngắn gọn và trực tiếp.
--   Đảm bảo câu trả lời của bạn hoàn toàn dựa vào ngữ cảnh đã cho, không sử dụng kiến thức bên ngoài.
--   Câu trả lời không được có các thông tin bí mật như id
--   Câu trả lời không được chứa tên các biến
--   Câu trả lời không được xuất xứ dữ liệu
+**Rules:**
+-   If the information needed to answer the question is not in the data, reply "No relevant information found in the data."
+-   Answer concisely and directly.
+-   Ensure your answer is entirely based on the given context, do not use outside knowledge.
+-   The answer must not contain confidential information such as IDs.
+-   The answer must not contain variable names.
+-   The answer must not mention data sources.
     """
     OMNI_PROMPT_TEMPLATE = """
-Bạn là một trợ lý AI phân tích và tóm tắt văn bản cực kỳ thông minh. Nhiệm vụ của bạn là dựa vào yêu cầu của người dùng và bối cảnh được cung cấp để đưa ra câu trả lời phù hợp nhất.
+You are an extremely intelligent AI assistant for analyzing and summarizing text. Your task is to use the user's request and the provided context to give the most appropriate answer.
 
-Hãy tuân thủ các quy tắc sau:
-1.  Phân tích **YÊU CẦU GỐC CỦA NGƯỜI DÙNG**.
-2.  Nếu yêu cầu có vẻ là **"có trọng tâm"** (hỏi về một chủ đề, nhân vật, khái niệm cụ thể), hãy sử dụng **BỐI CẢNH** được cung cấp để trả lời chi tiết và chính xác cho câu hỏi đó.
-3.  Nếu yêu cầu có vẻ là **"tóm tắt chung"** (ví dụ: "tóm tắt chung","nói về gì","chi tiết chính", "nội dung chính là gì?","tóm tắt", "tổng hợp", "summarize", "nói về gì", "viết về",
-    "chủ đề", "mục đích", "đề cập", "file này có gì",
-    "điểm chính", "key point", "ý chính", "luận điểm", "kết luận",
-    "khái quát"), hãy giả định rằng **BỐI CẢNH** là những phần quan trọng và đại diện nhất của toàn bộ tài liệu. Hãy tổng hợp các thông tin trong **BỐI CẢNH** để tạo ra một bản tóm tắt tổng thể.
-4.  Luôn trả lời dựa trên thông tin được cung cấp.
+Please follow these rules:
+1.  Analyze the **USER'S ORIGINAL REQUEST**.
+2.  If the request seems **"focused"** (asking about a specific topic, person, or concept), use the **CONTEXT** provided to answer that question in detail and accurately.
+3.  If the request seems like a **"general summary"** (e.g., "general summary", "what is it about", "main details", "what is the main content?", "summarize", "overview", "summarize", "write about", "topic", "purpose", "mention", "what's in this file", "key point", "main idea", "argument", "conclusion", "overview"), assume that the **CONTEXT** is the most important and representative part of the entire document. Synthesize the information in the **CONTEXT** to create an overall summary.
+4.  Always answer based on the information provided.
 
 ---
-**BỐI CẢNH (Trích xuất từ tài liệu):**
+**CONTEXT (Extracted from the document):**
 {context}
 ---
 
-**YÊU CẦU GỐC CỦA NGƯỜI DÙNG:**
+**USER'S ORIGINAL REQUEST:**
 "{user_query}"
 ---
 
-**CÂU TRẢ LỜI CỦA BẠN:**
+**YOUR ANSWER:**
 """
 
     api_key = "AIzaSyDFsMDHe3sYGTV8xLNO14smb2NPrlBLLK8"
@@ -89,7 +86,7 @@ Hãy tuân thủ các quy tắc sau:
         if ext not in self.SUPPORTED_EXTENSIONS:
             raise HTTPException(
                 status_code=400, 
-                detail=f"Chỉ hỗ trợ file {', '.join(self.SUPPORTED_EXTENSIONS)}"
+                detail=f"Only support files: {', '.join(self.SUPPORTED_EXTENSIONS)}"
             )
 
         try:
@@ -104,7 +101,7 @@ Hãy tuân thủ các quy tắc sau:
 
         except Exception as e:
             logger.error(f"Error processing file: {str(e)}")
-            raise HTTPException(status_code=500, detail="Lỗi xử lý file")
+            raise HTTPException(status_code=500, detail="File processing error")
         finally:
             if temp_file_path and os.path.exists(temp_file_path):
                 os.remove(temp_file_path)
@@ -129,7 +126,7 @@ Hãy tuân thủ các quy tắc sau:
             raise
         except Exception as e:
             logger.error(f"Unexpected error in rag_demo: {str(e)}")
-            raise HTTPException(status_code=500, detail="Lỗi không xác định")
+            raise HTTPException(status_code=500, detail="Unknown error")
         
     async def rag_tom_tat(self, prompt: str) -> str:
         try:
@@ -151,7 +148,7 @@ Hãy tuân thủ các quy tắc sau:
             raise
         except Exception as e:
             logger.error(f"Unexpected error in rag_demo: {str(e)}")
-            raise HTTPException(status_code=500, detail="Lỗi không xác định")
+            raise HTTPException(status_code=500, detail="Unknown error")
         
     async def add_file(self, file:UploadFile) -> str:
         try:
@@ -165,7 +162,7 @@ Hãy tuân thủ các quy tắc sau:
             raise
         except Exception as e:
             logger.error(f"Unexpected error in rag_demo: {str(e)}")
-            raise HTTPException(status_code=500, detail="Lỗi không xác định")
+            raise HTTPException(status_code=500, detail="Unknown error")
 
     @staticmethod
     def get_response_with_context_from_database(request: ChatRequest, khoa :str):
@@ -173,7 +170,7 @@ Hãy tuân thủ các quy tắc sau:
         genai.configure(api_key=GeminiService.api_key)
         config = GenerationConfig(presence_penalty=0.1,frequency_penalty=0.1)
         model1 = genai.GenerativeModel(model_name="gemini-2.0-flash",generation_config=config,system_instruction=GeminiService.system_instruction_knowledge)
-        result = model1.generate_content("Tạo 10 câu trả lời và Chọn ra 1 format trả lời xuất hiện nhiều nhất và trả về 1 câu trả lời thuộc format đó" + prompt)
+        result = model1.generate_content("Generate 10 answers, select the most common answer format, and return one answer in that format." + prompt)
 
         return result.text
 
@@ -183,4 +180,3 @@ Hãy tuân thủ các quy tắc sau:
         model = genai.GenerativeModel(model_name="gemini-2.0-flash")
         response = model.generate_content(request.prompt)
         return response.text
-        

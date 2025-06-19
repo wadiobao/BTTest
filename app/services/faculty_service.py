@@ -6,8 +6,8 @@ from sqlalchemy.exc import IntegrityError
 
 from app.exceptions import ResponseException
 from app.models.base_models import Faculty
-from app.utils.mapper import map_khoa_to_response
-from app.repository.faculty_repo import FacultyRepo
+from app.utils.mapper import mapFacultyToResponse
+from app.repository.faculty_repo.faculty_repo import FacultyRepo
 from app.models.request_models.faculty_request import FacultyRequest
 
 
@@ -29,7 +29,7 @@ class FacultyService:
             await self.repo.session.refresh(faculty)
             # Load relationships to avoid MissingGreenlet error
             await self.repo.session.refresh(faculty, attribute_names=['students'])
-            return map_khoa_to_response(faculty)
+            return mapFacultyToResponse(faculty)
         except IntegrityError as e:
             if "Duplicate entry" in str(e):
                 raise ResponseException(
@@ -40,7 +40,7 @@ class FacultyService:
     async def get_all_faculties(self):
         """Get all faculties"""
         faculty_list = await self.repo.get_all()
-        return [map_khoa_to_response(faculty) for faculty in faculty_list]
+        return [mapFacultyToResponse(faculty) for faculty in faculty_list]
 
     async def get_faculty_by_id(self, id: str):
         """Get faculty by ID"""
@@ -48,7 +48,7 @@ class FacultyService:
         if not faculty:
             raise ResponseException(
                 message=f"Faculty with ID '{id}' not found")
-        return map_khoa_to_response(faculty)
+        return mapFacultyToResponse(faculty)
 
     async def get_faculty_by_name(self, name: str):
         """Get faculty by name"""
@@ -57,7 +57,7 @@ class FacultyService:
         faculty_list = await self.repo.get_all()
         for faculty in faculty_list:
             if faculty.name.lower() == name.lower():
-                return map_khoa_to_response(faculty)
+                return mapFacultyToResponse(faculty)
         raise ResponseException(
             message=f"Faculty with name '{name}' not found")
 
@@ -70,7 +70,7 @@ class FacultyService:
         try:
             faculty_data = faculty_request.model_dump(exclude_unset=True)
             faculty = await self.repo.update(id, faculty_data)
-            return map_khoa_to_response(faculty)
+            return mapFacultyToResponse(faculty)
         except IntegrityError as e:
             raise ResponseException(
                 message="An error occurred while updating the faculty")

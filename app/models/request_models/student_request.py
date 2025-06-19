@@ -21,9 +21,9 @@ class StudentRequest(SQLModel):
     
     @field_validator("gender")
     def validate_gender(cls, v):
-        if v and v.lower() not in ("nam", "nữ", "nu"):
+        if v and v.lower() not in ("nam", "nữ", "nu","male","female"):
             raise ResponseException(
-                message="Giới tính phải là 'Nam' hoặc 'Nữ'"
+                message="Gender must be 'Nam' (Male) or 'Nữ' (Female)"
             )
         return v.title() if v else v
     
@@ -31,7 +31,8 @@ class StudentRequest(SQLModel):
     def validate_phone(cls, v):
         if v and not re.match(r"^(0|\+84)[0-9]{9}$", v):
             raise ResponseException(
-                message="Số điện thoại không hợp lệ")
+                message="Invalid phone number"
+            )
         return v
     
     @field_validator("birth_date", mode="after")
@@ -42,7 +43,8 @@ class StudentRequest(SQLModel):
             age = today.year - v.year - ((today.month, today.day) < (v.month, v.day))
             if age <= 18:
                 raise ResponseException(
-                    message="Sinh viên phải đủ 18 tuổi trở lên.")
+                    message="Student must be at least 18 years old."
+                )
         return v
     
     @field_validator('email')
@@ -51,5 +53,6 @@ class StudentRequest(SQLModel):
         email_regex = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
         if not re.fullmatch(email_regex, v):
             raise ResponseException(
-                message="Email không hợp lệ. Vui lòng nhập email đúng định dạng.")
+                message="Invalid email. Please enter a valid email address."
+            )
         return v 

@@ -6,8 +6,8 @@ from app.exceptions import ResponseException
 from app.models.base_models import Faculty, Student, Classes
 from app.models.request_models.class_request import ClassRequest
 from app.models.response_models import ClassResponse
-from app.utils.mapper import map_lop_hoc_to_response
-from app.repository.class_repo import ClassRepo
+from app.utils.mapper import mapClassToResponse
+from app.repository.class_repo.class_repo import ClassRepo
 
 
 class ClassService:
@@ -17,6 +17,8 @@ class ClassService:
         self.repo = repo
 
     async def create_class(self, class_request: ClassRequest):
+        if not self.repo.check_existed(class_request.id):
+            raise ResponseException("Class already exists")
         """Create a new class"""
         try:
             class_obj = Classes(
@@ -25,7 +27,7 @@ class ClassService:
                 capacity=class_request.capacity
             )
             class_obj = await self.repo.add(class_obj)
-            return map_lop_hoc_to_response(class_obj)
+            return mapClassToResponse(class_obj)
         except IntegrityError as e:
             if "Duplicate entry" in str(e):
                 raise ResponseException(
@@ -36,7 +38,7 @@ class ClassService:
     async def get_all_classes(self):
         """Get all classes"""
         class_list = await self.repo.get_all()
-        return [map_lop_hoc_to_response(class_obj) for class_obj in class_list]
+        return [mapClassToResponse(class_obj) for class_obj in class_list]
 
     async def get_class_by_id(self, id: str):
         """Get class by ID"""
@@ -44,7 +46,7 @@ class ClassService:
         if not class_obj:
             raise ResponseException(
                 message=f"Class with ID '{id}' not found")
-        return map_lop_hoc_to_response(class_obj)
+        return mapClassToResponse(class_obj)
 
     async def update_class(self, id: str, class_request: ClassRequest):
         """Update class by ID"""
@@ -55,7 +57,7 @@ class ClassService:
         try:
             class_data = class_request.model_dump(exclude_unset=True)
             class_obj = await self.repo.update(id, class_data)
-            return map_lop_hoc_to_response(class_obj)
+            return mapClassToResponse(class_obj)
         except IntegrityError as e:
             raise ResponseException(
                 message="An error occurred while updating the class")
