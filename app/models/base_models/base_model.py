@@ -20,5 +20,5 @@ class TimeStampedModel(SQLModel):
         default=None, 
         nullable=True, 
         index=True,  # Đánh index để truy vấn các bản ghi đã/chưa xóa nhanh hơn
-        description="Thời điểm bản ghi bị xóa mềm"
+        description="Time record was soft deleted"
     )

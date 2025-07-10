@@ -13,8 +13,8 @@ def setup_exception_handlers(app: FastAPI):
     @app.exception_handler(RequestValidationError)
     async def handle_validation_error(request: Request, exc: RequestValidationError):
         """
-        Custom exception handler để định dạng lại lỗi xác thực Pydantic.
-        Cố gắng lấy thông báo lỗi cụ thể từ lỗi đầu tiên.
+        Custom exception handler to format Pydantic validation errors.
+        Attempts to get a specific error message from the first error.
         """
 
         # Mặc định là một thông báo chung
@@ -23,13 +23,13 @@ def setup_exception_handlers(app: FastAPI):
         # Cố gắng lấy thông báo lỗi cụ thể từ lỗi đầu tiên nếu có
         if exc.errors():
             first_error = exc.errors()[0]
-            # Lấy msg từ lỗi đầu tiên.
-            # Hoặc có thể lấy thông báo lỗi từ ctx['error'] nếu đó là ValueError từ custom validator
+            # Get msg from the first error.
+            # Or you can get the error message from ctx['error'] if it's a ValueError from a custom validator
             if 'msg' in first_error:
-                # Pydantic v2 thường có 'msg' chứa thông báo lỗi tổng quát (e.g., "Value error, Giới tính phải là 'Nam' hoặc 'Nữ'")
-                # và 'ctx' chứa đối tượng lỗi gốc.
-                # Bạn có thể chọn cái nào phù hợp hơn.
-                # Ở đây, tôi sẽ ưu tiên thông báo từ ctx['error'] nếu nó là ValueError gốc.
+                # Pydantic v2 usually has 'msg' containing a general error message (e.g., "Value error, Gender must be 'Nam' or 'Nữ'")
+                # and 'ctx' containing the original error object.
+                # You can choose which one is more appropriate.
+                # Here, I will prioritize the message from ctx['error'] if it is the original ValueError.
                 if 'ctx' in first_error and 'error' in first_error['ctx'] and isinstance(first_error['ctx']['error'], ValueError):
                     error_message_to_display = str(first_error['ctx']['error'])
                 else:

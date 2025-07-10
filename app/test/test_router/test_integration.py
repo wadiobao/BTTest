@@ -100,10 +100,10 @@ async def test_seeded_data_integrity(async_client: AsyncClient):
     assert response.status_code == 200
     sinh_vien = response.json()["result"]
     assert sinh_vien["ten_sinh_vien"] == "Bao"
-    assert sinh_vien["khoa"] == "Công nghệ thông tin"
+    assert sinh_vien["khoa"] == "Information Technology"
     
     # Test khoa
-    response = await async_client.get("/khoa/hienthi/ten?ten=Công nghệ thông tin")
+    response = await async_client.get("/faculty/display/name?name=Information Technology")
     assert response.status_code == 200
     khoa_list = response.json()["result"]
     assert len(khoa_list) >= 1
@@ -114,4 +114,4 @@ async def test_seeded_data_integrity(async_client: AsyncClient):
     assert response.status_code == 200
     lop_hoc_list = response.json()["result"]
     assert len(lop_hoc_list) >= 1
-    assert lop_hoc_list[0]["id"] == "TEST001" 
+    assert lop_hoc_list[0]["id"] == "TEST001"

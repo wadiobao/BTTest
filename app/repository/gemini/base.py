@@ -140,7 +140,7 @@ class GeminiRepo(IGeminiRepo):
             
     async def query_data(self, query: str, source_document: Optional[str] = None) -> List[str]:
         """
-        Truy vấn dữ liệu.
+        Query data.
         """
         return await self.query_handler.hybrid_query(query, source_document) 
     

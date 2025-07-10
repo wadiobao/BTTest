@@ -40,7 +40,7 @@ async def setup_database():
     # Seed test data
     async with SessionLocal() as session:
         # Create test Khoa
-        khoa = Khoa(id="K01", ten_khoa="Công nghệ thông tin")
+        khoa = Khoa(id="K01", ten_khoa="Information Technology")
         session.add(khoa)
         
         # Create test SinhVien

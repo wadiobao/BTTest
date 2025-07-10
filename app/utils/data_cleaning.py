@@ -1,13 +1,13 @@
 import regex
 
-# Bạn không cần thay đổi gì ở hàm này, nó đã khá tốt
+# You do not need to change anything in this function, it is already quite good
 def remove_headers_footers(text, header_patterns=None, footer_patterns=None):
-    """Xóa các dòng header/footer dựa trên các mẫu regex."""
+    """Remove header/footer lines based on regex patterns."""
     if header_patterns is None:
-        # Mẫu thực tế hơn: xóa các dòng chứa "Trang X", "Số hiệu: Y"
-        header_patterns = [r'^(Trang|Page)\s+\d+', r'^(Số hiệu|Ref No):.*$']
+        # More practical pattern: remove lines containing "Page X", "Ref No: Y"
+        header_patterns = [r'^(Page)\s+\d+', r'^(Ref No):.*$']
     if footer_patterns is None:
-        footer_patterns = [r'^.*Footer.*$'] # Giữ lại mẫu footer cũ
+        footer_patterns = [r'^.*Footer.*$'] # Keep the old footer pattern
 
     for pattern in header_patterns + footer_patterns:
         text = regex.sub(pattern, '', text, flags=regex.MULTILINE | regex.IGNORECASE)
@@ -17,55 +17,55 @@ def remove_headers_footers(text, header_patterns=None, footer_patterns=None):
 
 def remove_special_characters_vietnamese_safe(text):
     """
-    Xóa các ký tự đặc biệt không mong muốn nhưng giữ lại toàn bộ chữ cái và số của mọi ngôn ngữ (bao gồm tiếng Việt).
-    \p{L} -> Bất kỳ chữ cái Unicode nào (a, b, c, á, à, ậ, đ...)
-    \p{N} -> Bất kỳ chữ số Unicode nào (1, 2, 3...)
-    \s -> Khoảng trắng
-    Dấu câu được liệt kê tường minh: .,;:'"?!-
+    Remove unwanted special characters but keep all letters and numbers of all languages (including Vietnamese).
+    \p{L} -> Any Unicode letter (a, b, c, d...)
+    \p{N} -> Any Unicode number (1, 2, 3...)
+    \s -> Whitespace
+    Explicitly listed punctuation: .,;:'"?!-
     """
-    # Regex này giữ lại chữ cái, số, khoảng trắng và các dấu câu cần thiết
+    # This regex keeps letters, numbers, whitespace, and necessary punctuation
     pattern = r'[^\p{L}\p{N}\s.,;:\'"?!-]'
     
-    # Thay thế các ký tự không mong muốn (ví dụ: emoji, ký tự khối,...) bằng một khoảng trắng
+    # Replace unwanted characters (e.g., emoji, block characters, etc.) with a space
     text = regex.sub(pattern, ' ', text)
     return text.strip()
 
 def normalize_repeated_punctuation(text):
     """
-    Chuẩn hóa các dấu câu bị lặp lại (ví dụ: ... thành ., ?? thành ?, !! thành !)
-    ([.?!]) -> Bắt giữ một trong các dấu ., ?, ! vào group 1.
-    \1+ -> Tìm kiếm thêm 1 hoặc nhiều lần ký tự đã bị bắt giữ ở group 1.
-    r'\1' -> Thay thế toàn bộ chuỗi tìm thấy bằng chỉ một ký tự của group 1.
+    Normalize repeated punctuation marks (e.g., ... to ., ?? to ?, !! to !)
+    ([.?!]) -> Capture one of ., ?, ! into group 1.
+    \1+ -> Find one or more occurrences of the captured character in group 1.
+    r'\1' -> Replace the entire found sequence with just one character from group 1.
     """
     text = regex.sub(r'([.?!])\1+', r'\1', text)
     return text.strip()
 
 def normalize_whitespace(text):
-    """Chuẩn hóa các khoảng trắng và dòng mới thừa."""
-    # Thay thế nhiều dòng mới liên tiếp bằng một dòng mới duy nhất (để giữ lại cấu trúc đoạn)
+    """Normalize excessive whitespace and newlines."""
+    # Replace multiple consecutive newlines with a single newline (to keep paragraph structure)
     text = regex.sub(r'\n{3,}', '\n\n', text)
-    # Thay thế nhiều khoảng trắng/tab bằng một khoảng trắng duy nhất
+    # Replace multiple spaces/tabs with a single space
     text = regex.sub(r'[ \t]+', ' ', text)
     
     return text.strip()
 
 def preprocess_text(text: str) -> str:
     """
-    Pipeline hoàn chỉnh để tiền xử lý văn bản, an toàn cho tiếng Việt.
+    Complete pipeline for text preprocessing, safe for Vietnamese.
     """
     if not isinstance(text, str):
         return ""
 
-    # 1. Xóa các khối lớn không cần thiết như header/footer
+    # 1. Remove large unnecessary blocks like header/footer
     text = remove_headers_footers(text)
     
-    # 2. Xóa các ký tự đặc biệt không mong muốn một cách an toàn
+    # 2. Safely remove unwanted special characters
     text = remove_special_characters_vietnamese_safe(text)
 
-    # 3. Chuẩn hóa các dấu câu lặp lại
+    # 3. Normalize repeated punctuation
     text = normalize_repeated_punctuation(text)
 
-    # 4. Chuẩn hóa khoảng trắng (thường làm cuối cùng để dọn dẹp)
+    # 4. Normalize whitespace (usually done last for cleanup)
     text = normalize_whitespace(text)
 
     return text.strip()

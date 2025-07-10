@@ -55,7 +55,7 @@ async def test_create_student(student_service):
         assert student.sdt == student_data.sdt
         assert student.email == student_data.email
         assert student.que_quan == student_data.que_quan
-        assert student.faculty == 'Toán'
+        assert student.faculty == 'Mathematics'
     except Exception as e:
         pytest.fail(f"Test failed with exception: {str(e)}")
 

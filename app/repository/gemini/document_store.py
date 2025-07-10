@@ -27,7 +27,7 @@ class DocumentStore:
     
     async def get_parent_chunks(self, parent_ids: List[str]) -> List[str]:
         """
-        Lấy nội dung của các parent chunks từ document store.
+        Get content of parent chunks from document store.
         """
         parent_docs_bytes = await self.store.amget(parent_ids)
         return [

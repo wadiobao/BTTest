@@ -7,7 +7,7 @@ from httpx import AsyncClient
 async def test_student_create_success(async_client: AsyncClient):
     student_data = {
         "name": "Student Moi",
-        "gender": "Nữ",
+        "gender": "Female",
         "birth_date": "2001-02-03",
         "phone": "0974745448",
         "email": "moi@example.com",
@@ -24,7 +24,7 @@ async def test_student_create_success(async_client: AsyncClient):
     assert get_response.status_code == 200
     result = get_response.json()["result"]
     assert result["name"] == student_data["name"]
-    assert result["faculty"] == "Công nghệ thông tin"
+    assert result["faculty"] == "Information Technology"
 
 @pytest.mark.asyncio
 async def test_student_create_fail(async_client: AsyncClient):
@@ -75,7 +75,7 @@ async def test_student_update(async_client: AsyncClient):
         "birth_date": "2000-01-01",
         "phone": "0123456789",
         "email": "bao@example.com",
-        "hometown": "Hà Nội",
+        "hometown": "Hanoi",
         "faculty_id": "K01"
     }
     response = await async_client.patch("/student/update/4", json=update_data)
@@ -118,5 +118,5 @@ async def test_student_delete(async_client: AsyncClient):
         # If no exception, should be 404
         assert get_response.status_code == 404
     except Exception as e:
-        # If exception occurs, should contain "không tồn tại"
-        assert "không tồn tại" in str(e)
+        # If exception occurs, should contain "does not exist"
+        assert "does not exist" in str(e)

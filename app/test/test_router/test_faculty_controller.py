@@ -38,7 +38,7 @@ async def test_faculty_get_by_id(async_client: AsyncClient):
     response = await async_client.get("/faculty/by-id/K01")
     assert response.status_code == 200
     data = response.json()
-    assert data["result"]["name"] == "Công nghệ thông tin"
+    assert data["result"]["name"] == "Information Technology"
 
 @pytest.mark.asyncio
 async def test_faculty_update(async_client: AsyncClient):
@@ -64,4 +64,4 @@ async def test_faculty_delete(async_client: AsyncClient):
     # Now delete it
     response = await async_client.delete("/faculty/delete/?id=DELETE")
     assert response.status_code == 200
-    assert response.json()["code"] == 200 
+    assert response.json()["code"] == 200

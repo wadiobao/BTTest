@@ -23,7 +23,7 @@ def extract_text_from_file(filepath: str) -> str:
             doc.close()
             return text
         except Exception as e:
-            raise ValueError(f"Lỗi khi đọc file PDF: {str(e)}")
+            raise ValueError(f"Error reading PDF file: {str(e)}")
 
     else:
-        raise ValueError("Chỉ hỗ trợ file .md hoặc .pdf")
+        raise ValueError("Only .md or .pdf files are supported")

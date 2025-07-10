@@ -9,7 +9,7 @@ class Student(TimeStampedModel, table=True):
     """Student model representing a student in the university"""
     id: Optional[int] = Field(default=None, primary_key=True, description="Student ID")
     name: str = Field(index=True, description="Student name")
-    gender: str = Field(description="Student gender (Nam/Nữ)")
+    gender: str = Field(description="Student gender (Male/Female)")
     birth_date: date = Field(description="Student birth date")
     phone: str = Field(description="Student phone number")
     email: str = Field(description="Student email")

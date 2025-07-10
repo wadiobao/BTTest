@@ -30,7 +30,7 @@ class QueryHandler:
         source_document: Optional[str] = None
     ) -> List[str]:
         """
-        Xử lý query và trả về kết quả.
+        Process query and return results.
         """
         try:
             # 1. Kiểm tra sources trong database
@@ -90,7 +90,7 @@ class QueryHandler:
             return parent_contents
 
         except Exception as e:
-            logger.error(f"Lỗi khi truy vấn: {e}", exc_info=True)
+            logger.error(f"Error in hybrid query: {e}", exc_info=True)
             return [] 
         
     async def hybrid_query(
@@ -157,7 +157,7 @@ class QueryHandler:
                     else:
                         combined_scores[doc_id] = sparse_weight * score
                         
-            # 5. Sắp xếp kết quả theo điểm số
+            # 5. Sort results by score
             sorted_doc_ids = sorted(
                 combined_scores.items(),
                 key=lambda x: x[1],
